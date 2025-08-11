@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>My Games</title>
+</head>
+
+<body>
+    <h1>My Game Library</h1>
+
+    <div>
+        <input id="title" placeholder="Title">
+        <input id="platform" placeholder="Platform">
+        <input id="genre" placeholder="Genre">
+        <button id="addBtn">Add Game</button>
+    </div>
+
+    <ul id="games"></ul>
+
+    <script>
+        const API = "http://localhost:5000";
+        const USER_ID = 1; // temp until real auth
+
+        async function loadGames() {
+            const res = await fetch(`${API}/api/games?user_id=${USER_ID}`);
+            const list = await res.json();
+            const ul = document.getElementById("games");
+            ul.innerHTML = "";
+            list.forEach(g => {
+                const li = document.createElement("li");
+                li.innerHTML = `
+          <strong>${g.title}</strong> — ${g.platform || ""} ${g.genre || ""}
+          <button onclick="openChecklist(${g.game_id})">Checklist</button>
+          <button onclick="delGame(${g.game_id})">Delete</button>
+        `;
+                ul.appendChild(li);
+            });
+        }
+
+        async function addGame() {
+            const payload = {
+                user_id: USER_ID,
+                title: document.getElementById("title").value,
+                platform: document.getElementById("platform").value,
+                genre: document.getElementById("genre").value
+            };
+            const res = await fetch(`${API}/api/games`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) { await loadGames(); }
+        }
+
+        async function delGame(id) {
+            await fetch(`${API}/api/games/${id}`, { method: "DELETE" });
+            loadGames();
+        }
+
+        function openChecklist(gameId) {
+            window.location.href = `checklist.html?game_id=${gameId}`;
+        }
+
+        document.getElementById("addBtn").addEventListener("click", addGame);
+        loadGames();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Checklist</title>
+</head>
+
+<body>
+    <h1>Checklist</h1>
+    <div>
+        <input id="desc" placeholder="New item description">
+        <input id="order" type="number" placeholder="Order">
+        <button id="addBtn">Add Item</button>
+    </div>
+    <ul id="items"></ul>
+
+    <script>
+        const API = "http://localhost:5000";
+        const params = new URLSearchParams(window.location.search);
+        const GAME_ID = parseInt(params.get("game_id"), 10);
+
+        async function loadChecklist() {
+            const res = await fetch(`${API}/api/games/${GAME_ID}/checklist`);
+            const list = await res.json();
+            const ul = document.getElementById("items");
+            ul.innerHTML = "";
+            list.sort((a, b) => (a.order || 0) - (b.order || 0)).forEach(it => {
+                const li = document.createElement("li");
+                li.innerHTML = `
+          <label>
+            <input type="checkbox" ${it.completed ? "checked" : ""} onchange="toggleComplete(${it.id}, this.checked)">
+            ${it.description} ${it.order != null ? `(order ${it.order})` : ""}
+          </label>
+          <button onclick="removeItem(${it.id})">Delete</button>
+        `;
+                ul.appendChild(li);
+            });
+        }
+
+        async function addItem() {
+            const description = document.getElementById("desc").value;
+            const order = parseInt(document.getElementById("order").value || "0", 10);
+            await fetch(`${API}/api/games/${GAME_ID}/checklist`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ description, order })
+            });
+            document.getElementById("desc").value = "";
+            document.getElementById("order").value = "";
+            loadChecklist();
+        }
+
+        async function toggleComplete(id, completed) {
+            await fetch(`${API}/api/checklist/${id}`, {
+                method: "PUT", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ completed })
+            });
+        }
+
+        async function removeItem(id) {
+            await fetch(`${API}/api/checklist/${id}`, { method: "DELETE" });
+            loadChecklist();
+        }
+
+        document.getElementById("addBtn").addEventListener("click", addItem);
+        loadChecklist();
+    </script>
+</body>
+
+</html>
