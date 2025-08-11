@@ -10,55 +10,104 @@
     <h1>My Game Library</h1>
 
     <div>
+        <button id="logoutBtn">Log out</button>
+    </div>
+
+    <hr>
+
+    <div>
         <input id="title" placeholder="Title">
         <input id="platform" placeholder="Platform">
         <input id="genre" placeholder="Genre">
         <button id="addBtn">Add Game</button>
+        <span id="flash"></span>
     </div>
 
     <ul id="games"></ul>
 
     <script>
         const API = "http://localhost:5000";
-        const USER_ID = 1; // temp until real auth
+        const userId = Number(localStorage.getItem("ct_user_id") || 0);
+
+        // Kick to login if not authenticated
+        if (!userId) {
+            window.location.href = "login.html";
+        }
+
+        document.getElementById("logoutBtn").onclick = () => {
+            localStorage.removeItem("ct_user_id");
+            localStorage.removeItem("ct_email");
+            localStorage.removeItem("ct_token");
+            window.location.href = "login.html";
+        };
 
         async function loadGames() {
-            const res = await fetch(`${API}/api/games?user_id=${USER_ID}`);
+            const res = await fetch(`${API}/api/games?user_id=${userId}`);
             const list = await res.json();
             const ul = document.getElementById("games");
             ul.innerHTML = "";
-            list.forEach(g => {
+            if (!Array.isArray(list) || list.length === 0) {
+                ul.innerHTML = "<li>No games yet. Add one above.</li>";
+                return;
+            }
+
+            for (const g of list) {
+                // fetch progress for each game
+                let percent = 0;
+                try {
+                    const pr = await fetch(`${API}/api/games/${g.game_id}/progress`);
+                    const pj = await pr.json();
+                    percent = pj.percent ?? 0;
+                } catch { }
+
                 const li = document.createElement("li");
                 li.innerHTML = `
           <strong>${g.title}</strong> — ${g.platform || ""} ${g.genre || ""}
-          <button onclick="openChecklist(${g.game_id})">Checklist</button>
-          <button onclick="delGame(${g.game_id})">Delete</button>
+          [${percent}% complete]
+          <button data-open="${g.game_id}">Checklist</button>
+          <button data-del="${g.game_id}">Delete</button>
         `;
                 ul.appendChild(li);
-            });
+            }
+
+            ul.onclick = async (e) => {
+                const openId = e.target.getAttribute("data-open");
+                const delId = e.target.getAttribute("data-del");
+                if (openId) window.location.href = `checklist.html?game_id=${openId}`;
+                if (delId) {
+                    if (!confirm("Delete this game?")) return;
+                    const res = await fetch(`${API}/api/games/${delId}`, { method: "DELETE" });
+                    if (res.ok) loadGames();
+                    else alert("Delete failed");
+                }
+            };
         }
 
         async function addGame() {
             const payload = {
-                user_id: USER_ID,
-                title: document.getElementById("title").value,
-                platform: document.getElementById("platform").value,
-                genre: document.getElementById("genre").value
+                user_id: userId,
+                title: document.getElementById("title").value.trim(),
+                platform: document.getElementById("platform").value.trim(),
+                genre: document.getElementById("genre").value.trim()
             };
+            if (!payload.title) {
+                alert("Title is required");
+                return;
+            }
             const res = await fetch(`${API}/api/games`, {
-                method: "POST", headers: { "Content-Type": "application/json" },
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             });
-            if (res.ok) { await loadGames(); }
-        }
-
-        async function delGame(id) {
-            await fetch(`${API}/api/games/${id}`, { method: "DELETE" });
-            loadGames();
-        }
-
-        function openChecklist(gameId) {
-            window.location.href = `checklist.html?game_id=${gameId}`;
+            const flash = document.getElementById("flash");
+            if (res.ok) {
+                flash.textContent = "Added";
+                document.getElementById("title").value = "";
+                loadGames();
+            } else {
+                const data = await res.json().catch(() => ({}));
+                flash.textContent = data.message || "Add failed";
+            }
         }
 
         document.getElementById("addBtn").addEventListener("click", addGame);

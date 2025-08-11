@@ -8,36 +8,70 @@
 
 <body>
     <h1>Login</h1>
+
     <form id="loginForm">
         <input type="email" id="email" placeholder="Email" required><br>
         <input type="password" id="password" placeholder="Password" required><br>
         <button type="submit">Login</button>
     </form>
+
+    <p><a href="register.html">Create an account</a></p>
     <p id="result"></p>
+
     <script>
+        const API = "http://localhost:5000";
+
+        if (localStorage.getItem("ct_user_id")) {
+            window.location.href = "dashboard.html";
+        }
+
         document.getElementById("loginForm").addEventListener("submit", async (e) => {
             e.preventDefault();
-            const email = document.getElementById("email").value;
+            const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value;
+
             try {
-                const res = await fetch("http://localhost:5000/api/login", {
+                const res = await fetch(`${API}/api/login`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ email, password })
                 });
                 const data = await res.json();
-                if (res.ok) {
-                    localStorage.setItem("ct_user_email", email);
-                    document.getElementById("result").innerText = "Logged in!";
-                    // window.location.href = "dashboard.html";
-                } else {
+
+                if (!res.ok) {
                     document.getElementById("result").innerText = data.message || "Login failed";
+                    return;
                 }
-            } catch (err) {
+
+                let uid = data.user_id || data.id || (data.user && (data.user.user_id || data.user.id));
+                if (!uid) {
+                    // fallback: ask the server for the id
+                    const q = new URLSearchParams({ email });
+                    const look = await fetch(`${API}/api/users/lookup?${q.toString()}`);
+                    if (look.ok) {
+                        const u = await look.json();
+                        uid = u.user_id;
+                    }
+                }
+
+                if (!uid) {
+                    document.getElementById("result").innerText = "No user_id returned. Add it to /api/login or enable /api/users/lookup.";
+                    return;
+                }
+
+                localStorage.setItem("ct_user_id", String(uid));
+                localStorage.setItem("ct_email", email);
+                if (data.token) localStorage.setItem("ct_token", data.token);
+
+                window.location.href = "dashboard.html";
+            } catch {
                 document.getElementById("result").innerText = "Network error.";
             }
         });
     </script>
+
 </body>
 
 </html>
+
+

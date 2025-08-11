@@ -8,63 +8,136 @@
 
 <body>
     <h1>Checklist</h1>
+    <p><a href="dashboard.html">Back to games</a></p>
+    <h2 id="progressText">Progress: ...</h2>
+
     <div>
-        <input id="desc" placeholder="New item description">
-        <input id="order" type="number" placeholder="Order">
+        <input id="descriptionInput" placeholder="New item description">
         <button id="addBtn">Add Item</button>
     </div>
+
     <ul id="items"></ul>
 
     <script>
         const API = "http://localhost:5000";
         const params = new URLSearchParams(window.location.search);
-        const GAME_ID = parseInt(params.get("game_id"), 10);
+        const GAME_ID = Number(params.get("game_id") || 0);
+
+        if (!GAME_ID) {
+            alert("Missing game_id");
+            window.location.href = "dashboard.html";
+        }
+
+        const itemsEl = document.getElementById("items");
+        const descriptionInput = document.getElementById("descriptionInput");
+        const addBtn = document.getElementById("addBtn");
+        const progressEl = document.getElementById("progressText");
+
 
         async function loadChecklist() {
             const res = await fetch(`${API}/api/games/${GAME_ID}/checklist`);
-            const list = await res.json();
-            const ul = document.getElementById("items");
-            ul.innerHTML = "";
-            list.sort((a, b) => (a.order || 0) - (b.order || 0)).forEach(it => {
+            const list = await res.json().catch(() => []);
+            itemsEl.innerHTML = "";
+
+            if (!Array.isArray(list) || list.length === 0) {
+                itemsEl.innerHTML = "<li>No items yet.</li>";
+                return;
+            }
+
+            for (const it of list) {
+                const id = it.checklist_item_id || it.id;
                 const li = document.createElement("li");
+                li.dataset.id = id;
                 li.innerHTML = `
-          <label>
-            <input type="checkbox" ${it.completed ? "checked" : ""} onchange="toggleComplete(${it.id}, this.checked)">
-            ${it.description} ${it.order != null ? `(order ${it.order})` : ""}
-          </label>
-          <button onclick="removeItem(${it.id})">Delete</button>
-        `;
-                ul.appendChild(li);
-            });
+            <label>
+              <input type="checkbox" class="toggle" ${it.completed ? "checked" : ""}>
+              <input type="text" class="edit" value="${it.description}" style="width: 280px;">
+            </label>
+            <button class="del">Delete</button>
+          `;
+                itemsEl.appendChild(li);
+            }
+        }
+
+        async function loadProgress() {
+            try {
+                const res = await fetch(`${API}/api/games/${GAME_ID}/progress`);
+                if (!res.ok) return;
+                const p = await res.json();
+                progressEl.textContent = `Progress: ${p.completed}/${p.total} items, ${p.percent}% complete`;
+            } catch { }
+        }
+
+        async function refreshAll() {
+            await loadChecklist();
+            await loadProgress();
         }
 
         async function addItem() {
-            const description = document.getElementById("desc").value;
-            const order = parseInt(document.getElementById("order").value || "0", 10);
-            await fetch(`${API}/api/games/${GAME_ID}/checklist`, {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ description, order })
+            const description = descriptionInput.value.trim();
+            if (!description) return;
+            const res = await fetch(`${API}/api/games/${GAME_ID}/checklist`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ description, completed: false })
             });
-            document.getElementById("desc").value = "";
-            document.getElementById("order").value = "";
-            loadChecklist();
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                alert(data.message || "Failed to add item");
+                return;
+            }
+            descriptionInput.value = "";
+            await refreshAll();
         }
 
-        async function toggleComplete(id, completed) {
+        // Event delegation for list actions
+        itemsEl.addEventListener("change", async (e) => {
+            if (!e.target.classList.contains("toggle")) return;
+            const li = e.target.closest("li");
+            const id = li.dataset.id;
+            const completed = e.target.checked;
             await fetch(`${API}/api/checklist/${id}`, {
-                method: "PUT", headers: { "Content-Type": "application/json" },
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ completed })
             });
-        }
+            loadProgress();
+        });
 
-        async function removeItem(id) {
+        itemsEl.addEventListener("keydown", async (e) => {
+            if (e.key !== "Enter" || !e.target.classList.contains("edit")) return;
+            const li = e.target.closest("li");
+            const id = li.dataset.id;
+            const description = e.target.value.trim();
+            await fetch(`${API}/api/checklist/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ description })
+            });
+            e.target.blur();
+        });
+
+        itemsEl.addEventListener("click", async (e) => {
+            if (!e.target.classList.contains("del")) return;
+            const li = e.target.closest("li");
+            const id = li.dataset.id;
             await fetch(`${API}/api/checklist/${id}`, { method: "DELETE" });
-            loadChecklist();
-        }
+            refreshAll();
+        });
 
-        document.getElementById("addBtn").addEventListener("click", addItem);
-        loadChecklist();
+        addBtn.addEventListener("click", addItem);
+
+        const inputEl = document.getElementById('descriptionInput');
+            if (inputEl) {
+                inputEl.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') addItem();
+                });
+            }
+
+        // Load initial data
+        refreshAll();
     </script>
+
 </body>
 
 </html>
