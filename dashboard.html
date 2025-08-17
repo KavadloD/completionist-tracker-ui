@@ -65,6 +65,7 @@
           <strong>${g.title}</strong> — ${g.platform || ""} ${g.genre || ""}
           [${percent}% complete]
           <button data-open="${g.game_id}">Checklist</button>
+          <button data-edit="${g.game_id}">Edit</button>
           <button data-del="${g.game_id}">Delete</button>
         `;
                 ul.appendChild(li);
@@ -73,14 +74,60 @@
             ul.onclick = async (e) => {
                 const openId = e.target.getAttribute("data-open");
                 const delId = e.target.getAttribute("data-del");
-                if (openId) window.location.href = `checklist.html?game_id=${openId}`;
+                const editId = e.target.getAttribute("data-edit");
+
+                if (openId) {
+                    window.location.href = `checklist.html?game_id=${openId}`;
+                    return;
+                }
+
                 if (delId) {
                     if (!confirm("Delete this game?")) return;
                     const res = await fetch(`${API}/api/games/${delId}`, { method: "DELETE" });
                     if (res.ok) loadGames();
                     else alert("Delete failed");
+                    return;
+                }
+
+                if (editId) {
+                    // prefill with current values
+                    let current = { title: "", platform: "", genre: "" };
+                    try {
+                        const curRes = await fetch(`${API}/api/games/${editId}`);
+                        if (curRes.ok) current = await curRes.json();
+                    } catch { }
+
+                    const newTitle = prompt("New title (leave blank to keep current):", current.title || "");
+                    if (newTitle === null) return;
+
+                    const newPlatform = prompt("New platform (blank to clear, leave as is to keep):", current.platform || "");
+                    if (newPlatform === null) return;
+
+                    const newGenre = prompt("New genre (blank to clear, leave as is to keep):", current.genre || "");
+                    if (newGenre === null) return;
+
+                    const payload = {};
+                    if (newTitle.trim() !== "") payload.title = newTitle.trim();
+                    payload.platform = (newPlatform || "").trim(); // allow clearing
+                    payload.genre = (newGenre || "").trim();    // allow clearing
+
+                    const res = await fetch(`${API}/api/games/${editId}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!res.ok) {
+                        const data = await res.json().catch(() => ({}));
+                        alert(data.message || "Update failed");
+                        return;
+                    }
+
+                    loadGames();
+                    return;
                 }
             };
+
         }
 
         async function addGame() {
