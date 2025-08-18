@@ -116,9 +116,11 @@
             <div style="text-align:right">
               <div class="progress" style="font-size:16px;font-weight:600">${game.progress || 0}%</div>
               <div style="margin-top:10px">
-                <a href="checklist.html?game_id=${game.game_id}" class="button btn-checklist">Checklist</a>
-                <button class="button btn-ghost" onclick="editGame(${game.game_id})">Edit</button>
-                <button class="button btn-delete" onclick="deleteGame(${game.game_id})">Delete</button>
+                <div class="btn-group">
+                    <a href="..." class="button btn-checklist">Checklist</a>
+                    <button class="button btn-ghost">Edit</button>
+                    <button class="button btn-delete">Delete</button>
+                </div>
               </div>
             </div>
           </div>
