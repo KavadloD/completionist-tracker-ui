@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="styles.css">
+    <script src="toast.js" defer></script>
     <title>Community Checklists</title>
 </head>
 
@@ -59,8 +60,7 @@
                 if (!id) return;
 
                 if (!userId) {
-                    alert("You must be logged in to import a checklist.");
-                    return;
+                    toast("Please log in to import checklists.", "info");
                 }
 
                 const res = await fetch(`${API}/api/community/import/${id}`, {
@@ -71,10 +71,10 @@
 
                 const result = await res.json();
                 if (res.ok) {
-                    alert(`Checklist imported. Opening your new checklist.`);
+                    toast("Checklist imported. Opening your new checklist.", "success");
                     window.location.href = `checklist.html?game_id=${result.new_game_id}`;
                 } else {
-                    alert(result.message || "Import failed");
+                    toast(result.message || "Import failed", "error");
                 }
             };
         }

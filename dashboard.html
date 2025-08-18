@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="styles.css">
+    <script src="toast.js" defer></script>
     <title>My Games</title>
 </head>
 
@@ -100,7 +101,7 @@
                     if (!confirm("Delete this game?")) return;
                     const res = await fetch(`${API}/api/games/${delId}`, { method: "DELETE" });
                     if (res.ok) loadGames();
-                    else alert("Delete failed");
+                    else toast("Delete failed", "error");
                     return;
                 }
 
@@ -133,7 +134,7 @@
 
                     if (!res.ok) {
                         const data = await res.json().catch(() => ({}));
-                        alert(data.message || "Update failed");
+                        toast(data.message || "Update failed", "error");
                         return;
                     }
                     loadGames();
@@ -149,7 +150,7 @@
                 genre: document.getElementById("genre").value.trim()
             };
             if (!payload.title) {
-                alert("Title is required");
+                toast("Title is required", "error");
                 return;
             }
             const res = await fetch(`${API}/api/games`, {
@@ -159,12 +160,13 @@
             });
             const flash = document.getElementById("flash");
             if (res.ok) {
-                flash.textContent = "Added";
+                flash.textContent = "";
+                toast("Game added", "success");
                 document.getElementById("title").value = "";
                 loadGames();
             } else {
                 const data = await res.json().catch(() => ({}));
-                flash.textContent = data.message || "Add failed";
+                toast(data.message || "Add failed", "error");
             }
         }
 

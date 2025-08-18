@@ -3,8 +3,9 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Checklist</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="toast.js" defer></script>
+    <title>Checklist</title>
 </head>
 
 <body>
@@ -37,7 +38,7 @@
             const GAME_ID = Number(params.get("game_id") || 0);
 
             if (!GAME_ID) {
-                alert("Missing game_id");
+                toast("Missing game ID, returning to dashboard", "error");
                 window.location.href = "dashboard.html";
             }
 
@@ -100,7 +101,7 @@
                 });
                 if (!res.ok) {
                     const data = await res.json().catch(() => ({}));
-                    alert(data.message || "Failed to add item");
+                    toast(data.message || "Failed to add item", "error");
                     return;
                 }
                 descriptionInput.value = "";
