@@ -3,20 +3,41 @@
 
 <head>
     <meta charset="utf-8">
+    <link rel="stylesheet" href="styles.css">
     <title>Login</title>
 </head>
 
 <body>
-    <h1>Login</h1>
+    <div class="container">
+        <div class="topbar">
+            <div class="brand">Completionist Tracker</div>
+            <div class="nav">
+                <a class="link-btn btn-ghost" href="login.html">Back to login</a>
+            </div>
+        </div>
 
-    <form id="loginForm">
-        <input type="email" id="email" placeholder="Email" required><br>
-        <input type="password" id="password" placeholder="Password" required><br>
-        <button type="submit">Login</button>
-    </form>
+        <div class="panel" style="max-width:520px">
+            <h1>Create account</h1>
+            <p class="section" style="color:var(--muted)">Start tracking your games and progress.</p>
 
-    <p><a href="register.html">Create an account</a></p>
-    <p id="result"></p>
+            <form id="registerForm">
+                <div class="form-row">
+                    <input type="text" id="username" class="input" placeholder="Username" required>
+                </div>
+                <div class="form-row">
+                    <input type="email" id="email" class="input" placeholder="Email" required>
+                </div>
+                <div class="form-row">
+                    <input type="password" id="password" class="input" placeholder="Password" required>
+                </div>
+                <div class="form-row">
+                    <button type="submit" class="button">Register</button>
+                    <a href="login.html" class="link-btn btn-ghost">Back to login</a>
+                    <span id="result" class="flash"></span>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
         const API = "http://localhost:5000";
@@ -73,5 +94,3 @@
 </body>
 
 </html>
-
-
