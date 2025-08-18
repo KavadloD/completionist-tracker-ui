@@ -137,25 +137,45 @@
             const run_type = document.getElementById("run_type").value;
             const tags = document.getElementById("tags").value.trim();
 
-            if (!title || !platform || !genre) {
+            // Validate
+            if (!title || !platform || !genre || !run_type) {
                 toast("Please fill in all required fields.", "error");
                 return;
             }
 
-            const res = await fetch(`${API}/api/games`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ user_id: userId, title, platform, genre, run_type, tags })
-            });
+            const payload = {
+                user_id: userId,
+                title,
+                platform,
+                genre,
+                run_type,
+                tags
+            };
 
-            if (res.ok) {
-                toast("Game added!", "success");
-                document.getElementById("gameForm").reset();
-                loadGames();
-            } else {
-                toast("Failed to add game", "error");
+            console.log("Submitting:", payload); // Debug log
+
+            try {
+                const res = await fetch(`${API}/api/games`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json().catch(() => ({}));
+
+                if (res.ok && data.game_id) {
+                    toast("Game added!", "success");
+                    document.getElementById("gameForm").reset();
+                    loadGames();
+                } else {
+                    toast(data.message || "Failed to add game", "error");
+                }
+            } catch (err) {
+                console.error("Add game error:", err);
+                toast("Network error.", "error");
             }
         }
+
 
         async function deleteGame(id) {
             if (!confirm("Delete this game?")) return;
