@@ -78,8 +78,9 @@ body {
 
 /* General Container */
 .container {
-    max-width: 960px;
+    max-width: 1200px;
     margin: 0 auto;
+    padding: 0 20px;
 }
 
 /* Topbar */
@@ -309,4 +310,9 @@ a:hover {
     margin-left: auto;
     opacity: .7;
     cursor: pointer;
+}
+
+.wide-panel {
+    max-width: 100%;
+    width: 100%;
 }
