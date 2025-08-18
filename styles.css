@@ -216,6 +216,27 @@ button:active {
     color: var(--text);
 }
 
+/* Checklist button (green like Add Game) */
+.button.btn-checklist {
+    background: var(--primary);
+    /* uses same green as Add Game */
+    color: #fff;
+}
+
+.button.btn-checklist:hover {
+    filter: brightness(1.1);
+}
+
+/* Delete button (red) */
+.button.btn-delete {
+    background: #E94560;
+    color: #fff;
+}
+
+.button.btn-delete:hover {
+    background: #cf2f49;
+}
+
 /* Links */
 a {
     color: var(--accent);
