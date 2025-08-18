@@ -1,31 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="styles.css">
-    <script src="toast.js" defer></script>
+    <meta charset="UTF-8" />
     <title>Community Checklists</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="toast.js" defer></script>
 </head>
 
 <body>
     <div class="container">
-        <div class="topbar">
+        <!-- Top Navigation Bar -->
+        <header class="topbar">
             <div class="brand">Completionist Tracker</div>
-            <div class="nav">
+            <nav class="nav">
                 <a class="link-btn btn-ghost" href="dashboard.html">Dashboard</a>
-            </div>
-        </div>
+            </nav>
+        </header>
 
-        <div class="panel">
-            <h1>Browse community checklists</h1>
-            <p class="section" style="color:var(--muted)">Import templates into your library and start tracking.</p>
+        <!-- Main Content Panel -->
+        <main class="panel">
+            <h1>Browse Community Checklists</h1>
+            <p class="section" style="color: var(--muted);">
+                Import templates into your library and start tracking.
+            </p>
             <div id="community-list" class="list">Loading...</div>
-        </div>
+        </main>
     </div>
 
     <script>
-        const API = "http://localhost:5000";
+        const API = "https://completionist-backend.onrender.com";
         const userId = Number(localStorage.getItem("ct_user_id") || 0);
 
         async function loadCommunityChecklists() {
@@ -34,7 +38,10 @@
 
             const container = document.getElementById("community-list");
             if (!Array.isArray(data) || data.length === 0) {
-                container.innerHTML = `<div class="card"><span style="color:var(--muted)">No community templates available.</span></div>`;
+                container.innerHTML = `
+          <div class="card">
+            <span style="color: var(--muted);">No community templates available.</span>
+          </div>`;
                 return;
             }
 
@@ -43,14 +50,14 @@
                 const div = document.createElement("div");
                 div.className = "card item";
                 div.innerHTML = `
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
             <div>
-              <div style="font-weight:700">${item.title}</div>
-              <div style="color:var(--muted);font-size:13px">${item.platform || ""} ${item.genre || ""}</div>
+              <div style="font-weight: 700;">${item.title}</div>
+              <div style="color: var(--muted); font-size: 13px;">${item.platform || ""} ${item.genre || ""}</div>
             </div>
             <button class="button" data-import="${item.community_checklist_id}">Import</button>
           </div>
-          <div style="color:var(--muted);margin-top:8px">${item.description || ""}</div>
+          <div style="color: var(--muted); margin-top: 8px;">${item.description || ""}</div>
         `;
                 container.appendChild(div);
             });
@@ -61,6 +68,7 @@
 
                 if (!userId) {
                     toast("Please log in to import checklists.", "info");
+                    return;
                 }
 
                 const res = await fetch(`${API}/api/community/import/${id}`, {

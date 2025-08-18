@@ -37,7 +37,8 @@
     </div>
 
     <script>
-        const API = "http://localhost:5000";
+        const API = "https://completionist-backend.onrender.com";
+
         const userId = Number(localStorage.getItem("ct_user_id") || 0);
 
         if (!userId) window.location.href = "login.html";
