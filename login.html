@@ -44,7 +44,7 @@
         const API = "https://completionist-backend.onrender.com";
 
         if (localStorage.getItem("ct_user_id")) {
-            window.location.href = "dashboard.html";
+            window.location.href = "index.html";
         }
 
         document.getElementById("loginForm").addEventListener("submit", async (e) => {
@@ -85,7 +85,7 @@
                 localStorage.setItem("ct_email", email);
                 if (data.token) localStorage.setItem("ct_token", data.token);
 
-                window.location.href = "dashboard.html";
+                window.location.href = "index.html";
             } catch {
                 document.getElementById("result").innerText = "Network error.";
             }

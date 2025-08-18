@@ -13,7 +13,7 @@
         <div class="topbar">
             <div class="brand">Completionist Tracker</div>
             <div class="nav">
-                <a class="link-btn btn-ghost" href="dashboard.html">Dashboard</a>
+                <a class="link-btn btn-ghost" href="index.html">Dashboard</a>
                 <a class="link-btn btn-ghost" href="community.html">Community</a>
             </div>
         </div>
@@ -40,7 +40,7 @@
 
             if (!GAME_ID) {
                 toast("Missing game ID, returning to dashboard", "error");
-                window.location.href = "dashboard.html";
+                window.location.href = "index.html";
             }
 
             const itemsEl = document.getElementById("items");
