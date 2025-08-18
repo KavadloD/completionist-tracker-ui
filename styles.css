@@ -177,12 +177,15 @@ button,
     padding: 10px 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: transform .04s ease, opacity .15s ease;
+    transition: transform 0.04s ease, opacity 0.15s ease, filter 0.15s ease;
 }
 
 .button:hover,
-button:hover {
-    opacity: .92;
+button:hover,
+.link-btn:hover {
+    opacity: 0.95;
+    filter: brightness(1.1);
+    /* Increased contrast on hover */
 }
 
 .button:active,
@@ -190,14 +193,26 @@ button:active {
     transform: translateY(1px);
 }
 
+/* Secondary Button */
 .btn-secondary {
     background: #333;
     color: #eee;
 }
 
+.btn-secondary:hover {
+    background: #444;
+}
+
+/* Ghost Button */
 .btn-ghost {
     background: transparent;
-    border: 1px solid #2b2b2b;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+}
+
+.btn-ghost:hover {
+    background-color: rgba(74, 144, 226, 0.1);
+    border-color: var(--accent);
     color: var(--text);
 }
 
@@ -242,10 +257,11 @@ a:hover {
     display: inline-block;
     background: #222;
     border: 1px solid #2b2b2b;
-    padding: 6px 10px;
+    padding: 6px 12px;
     border-radius: 999px;
-    color: var(--muted);
-    font-size: 13px;
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 700;
 }
 
 /* Flash text */
