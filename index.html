@@ -22,25 +22,23 @@
             <h1>My Dashboard</h1>
             <p class="section" style="color: var(--muted)">Track and manage your game progress.</p>
 
-            <form id="gameForm">
-                <div class="form-row" style="flex-direction: column; gap: 14px">
-                    <input id="title" class="input" placeholder="Game Title" required autocomplete="off">
-
-                    <div style="display: flex; flex-wrap: wrap; gap: 10px">
-                        <select id="run_type" class="input" required style="flex: 1; min-width: 160px">
-                            <option value="">Run Type</option>
-                        </select>
-                        <select id="platform" class="input" required style="flex: 1; min-width: 160px">
-                            <option value="">Platform</option>
-                        </select>
-                        <select id="genre" class="input" required style="flex: 1; min-width: 160px">
-                            <option value="">Genre</option>
-                        </select>
-                    </div>
-
-                    <input id="tags" class="input" placeholder="Tags (comma-separated)" autocomplete="off">
-
-                    <div style="display: flex; align-items: center; gap: 12px">
+            <form id="gameForm" class="wide-form">
+                <div class="form-row"
+                    style="flex-direction: row; flex-wrap: wrap; gap: 20px; align-items: flex-start; justify-content: space-between">
+                    <input id="title" class="input" placeholder="Game Title" required autocomplete="off"
+                        style="flex: 2; min-width: 240px">
+                    <select id="run_type" class="input" required style="flex: 1; min-width: 160px">
+                        <option value="">Run Type</option>
+                    </select>
+                    <select id="platform" class="input" required style="flex: 1; min-width: 160px">
+                        <option value="">Platform</option>
+                    </select>
+                    <select id="genre" class="input" required style="flex: 1; min-width: 160px">
+                        <option value="">Genre</option>
+                    </select>
+                    <input id="tags" class="input" placeholder="Tags (comma-separated)" autocomplete="off"
+                        style="flex: 2; min-width: 240px">
+                    <div style="display: flex; align-items: center; gap: 12px; flex-basis: 100%; margin-top: 10px">
                         <button class="button" type="submit">Add Game</button>
                         <span id="flash" class="flash"></span>
                     </div>

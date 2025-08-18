@@ -313,6 +313,11 @@ a:hover {
 }
 
 .wide-panel {
-    max-width: 100%;
+    max-width: none;
     width: 100%;
+    padding: 32px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
