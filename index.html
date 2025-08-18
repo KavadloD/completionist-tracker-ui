@@ -84,7 +84,7 @@
         }
 
         async function loadGames() {
-            const res = await fetch(`${API}/api/games/${userId}`);
+            const res = await fetch(`${API}/api/games?user_id=${userId}`);
             const data = await res.json();
 
             const container = document.getElementById("gameList");
