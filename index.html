@@ -18,31 +18,32 @@
             </div>
         </div>
 
-        <div class="panel">
+        <div class="panel" style="max-width: 700px; margin: 0 auto">
             <h1>My Dashboard</h1>
-            <p class="section" style="color:var(--muted)">Track and manage your game progress.</p>
+            <p class="section" style="color: var(--muted)">Track and manage your game progress.</p>
 
             <form id="gameForm">
-                <div class="form-row">
-                    <input id="title" class="input" placeholder="Game Title" required>
-                </div>
-                <div class="form-row">
-                    <select id="run_type" class="input" required>
-                        <option value="">Run Type</option>
-                    </select>
-                    <select id="platform" class="input" required>
-                        <option value="">Platform</option>
-                    </select>
-                    <select id="genre" class="input" required>
-                        <option value="">Genre</option>
-                    </select>
-                </div>
-                <div class="form-row">
-                    <input id="tags" class="input" placeholder="Tags (comma-separated)">
-                </div>
-                <div class="form-row">
-                    <button class="button" type="submit">Add Game</button>
-                    <span id="flash" class="flash"></span>
+                <div class="form-row" style="flex-direction: column; gap: 14px">
+                    <input id="title" class="input" placeholder="Game Title" required autocomplete="off">
+
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px">
+                        <select id="run_type" class="input" required style="flex: 1; min-width: 160px">
+                            <option value="">Run Type</option>
+                        </select>
+                        <select id="platform" class="input" required style="flex: 1; min-width: 160px">
+                            <option value="">Platform</option>
+                        </select>
+                        <select id="genre" class="input" required style="flex: 1; min-width: 160px">
+                            <option value="">Genre</option>
+                        </select>
+                    </div>
+
+                    <input id="tags" class="input" placeholder="Tags (comma-separated)" autocomplete="off">
+
+                    <div style="display: flex; align-items: center; gap: 12px">
+                        <button class="button" type="submit">Add Game</button>
+                        <span id="flash" class="flash"></span>
+                    </div>
                 </div>
             </form>
         </div>
@@ -56,7 +57,6 @@
         const API = "https://completionist-backend.onrender.com";
         const userId = Number(localStorage.getItem("ct_user_id") || 0);
 
-        // Dropdown presets (feel free to adjust)
         const platforms = ["PC", "PlayStation", "Xbox", "Switch", "Mobile"];
         const genres = ["RPG", "Action", "Adventure", "Platformer", "Puzzle"];
         const runTypes = ["100% Completion", "Minimalist", "Challenge Run", "Speedrun", "Custom"];
@@ -105,22 +105,24 @@
                     .join(" ");
 
                 div.innerHTML = `
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-                <div>
-                    <div style="font-weight:700">${game.title}</div>
-                    <div style="color:var(--muted);font-size:13px">${game.platform || ""}${game.platform && game.genre ? " | " : ""}${game.genre || ""}</div>
-                    <div style="color:var(--muted);font-size:13px">${game.run_type || ""}</div>
-                    <div class="tags" style="margin-top:4px">${tagHTML}</div>
-                </div>
-                <div style="text-align:right">
-                    <div class="progress" style="font-size:16px;font-weight:600">${game.progress || 0}%</div>
-                    <div style="margin-top:10px">
-                        <a href="checklist.html?game_id=${game.game_id}" class="button btn-secondary">Checklist</a>
-                        <button class="button btn-ghost" onclick="editGame(${game.game_id})">Edit</button>
-                        <button class="button btn-ghost" onclick="deleteGame(${game.game_id})">Delete</button>
-                    </div>
-                </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+            <div>
+              <div style="font-weight:700">${game.title}</div>
+              <div style="color:var(--muted);font-size:13px">
+                ${game.platform || ""}${game.platform && game.genre ? " | " : ""}${game.genre || ""}
+              </div>
+              <div style="color:var(--muted);font-size:13px">${game.run_type || ""}</div>
+              <div class="tags" style="margin-top:4px">${tagHTML}</div>
             </div>
+            <div style="text-align:right">
+              <div class="progress" style="font-size:16px;font-weight:600">${game.progress || 0}%</div>
+              <div style="margin-top:10px">
+                <a href="checklist.html?game_id=${game.game_id}" class="button btn-secondary">Checklist</a>
+                <button class="button btn-ghost" onclick="editGame(${game.game_id})">Edit</button>
+                <button class="button btn-ghost" onclick="deleteGame(${game.game_id})">Delete</button>
+              </div>
+            </div>
+          </div>
         `;
                 container.appendChild(div);
             });
@@ -130,9 +132,9 @@
             e.preventDefault();
 
             const title = document.getElementById("title").value.trim();
-            const platform = document.getElementById("platform").value.trim();
-            const genre = document.getElementById("genre").value.trim();
-            const run_type = document.getElementById("run_type").value.trim();
+            const platform = document.getElementById("platform").value;
+            const genre = document.getElementById("genre").value;
+            const run_type = document.getElementById("run_type").value;
             const tags = document.getElementById("tags").value.trim();
 
             if (!title || !platform || !genre) {
