@@ -13,18 +13,15 @@
         <div class="topbar">
             <div class="brand">Completionist Tracker</div>
             <div class="nav">
-                <a class="link-btn btn-ghost" href="login.html">Back to login</a>
+                <a class="link-btn btn-ghost" href="register.html">Create account</a>
             </div>
         </div>
 
         <div class="panel" style="max-width:520px">
-            <h1>Create account</h1>
-            <p class="section" style="color:var(--muted)">Start tracking your games and progress.</p>
+            <h1>Login</h1>
+            <p class="section" style="color:var(--muted)">Welcome back. Enter your details to continue.</p>
 
-            <form id="registerForm">
-                <div class="form-row">
-                    <input type="text" id="username" class="input" placeholder="Username" required>
-                </div>
+            <form id="loginForm">
                 <div class="form-row">
                     <input type="email" id="email" class="input" placeholder="Email" required>
                 </div>
@@ -32,8 +29,7 @@
                     <input type="password" id="password" class="input" placeholder="Password" required>
                 </div>
                 <div class="form-row">
-                    <button type="submit" class="button">Register</button>
-                    <a href="login.html" class="link-btn btn-ghost">Back to login</a>
+                    <button type="submit" class="button">Login</button>
                     <span id="result" class="flash"></span>
                 </div>
             </form>
@@ -67,7 +63,6 @@
 
                 let uid = data.user_id || data.id || (data.user && (data.user.user_id || data.user.id));
                 if (!uid) {
-                    // fallback: ask the server for the id
                     const q = new URLSearchParams({ email });
                     const look = await fetch(`${API}/api/users/lookup?${q.toString()}`);
                     if (look.ok) {
@@ -91,7 +86,6 @@
             }
         });
     </script>
-
 </body>
 
 </html>
