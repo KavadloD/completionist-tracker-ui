@@ -20,17 +20,63 @@
 html,
 body {
     height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg);
+    font-family: 'Segoe UI', sans-serif;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
 }
 
 body {
     font-family: Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    background: radial-gradient(1200px 600px at 20% -10%, #1b1b1b 0%, #121212 60%);
+    background: radial-gradient(1000px 500px at 50% -20%, #1c1c1c 0%, #121212 80%);
     color: var(--text);
     margin: 0;
     padding: 32px 20px 80px;
 }
 
-/* Container */
+/* === AUTH PAGE ONLY === */
+.auth-page .container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 40px;
+    gap: 24px;
+}
+
+.auth-page .topbar {
+    margin-top: 20px;
+    margin-bottom: 0;
+}
+
+.auth-page .panel {
+    background: linear-gradient(180deg, var(--panel) 0%, #181818 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 32px 32px 28px;
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.auth-page .form-row {
+    margin-bottom: 16px;
+}
+
+.auth-page .panel .link-btn,
+.auth-page .panel a {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+
+/* General Container */
 .container {
     max-width: 960px;
     margin: 0 auto;
@@ -80,7 +126,8 @@ h3 {
 }
 
 h1 {
-    font-size: 28px;
+    font-size: 26px;
+    margin-bottom: 8px;
 }
 
 h2 {
@@ -208,7 +255,8 @@ a:hover {
 
 /* Sections */
 .section {
-    margin: 18px 0;
+    margin-bottom: 20px;
+    font-size: 14px;
 }
 
 /* Responsive */

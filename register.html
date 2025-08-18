@@ -1,43 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register – Completionist Tracker</title>
+    <link rel="stylesheet" href="styles.css" />
     <script src="toast.js" defer></script>
-    <title>Register</title>
 </head>
 
-<body>
+<body class="auth-page">
     <div class="container">
-        <div class="topbar">
+        <header class="topbar">
             <div class="brand">Completionist Tracker</div>
-            <div class="nav">
-                <a class="link-btn btn-ghost" href="login.html">Back to login</a>
-            </div>
-        </div>
+        </header>
 
-        <div class="panel" style="max-width:520px">
+        <main class="panel">
             <h1>Create account</h1>
-            <p class="section" style="color:var(--muted)">Start tracking your games and progress.</p>
+            <p class="section" style="color: var(--muted);">Start tracking your games and progress.</p>
 
             <form id="registerForm">
                 <div class="form-row">
-                    <input type="text" id="username" class="input" placeholder="Username" required>
+                    <input type="text" id="username" class="input" placeholder="Username" required />
                 </div>
                 <div class="form-row">
-                    <input type="email" id="email" class="input" placeholder="Email" required>
+                    <input type="email" id="email" class="input" placeholder="Email" required />
                 </div>
                 <div class="form-row">
-                    <input type="password" id="password" class="input" placeholder="Password" required>
+                    <input type="password" id="password" class="input" placeholder="Password" required />
                 </div>
                 <div class="form-row">
                     <button type="submit" class="button">Register</button>
-                    <a href="login.html" class="link-btn btn-ghost">Back to login</a>
                     <span id="result" class="flash"></span>
                 </div>
+                <div class="form-row">
+                    <a href="login.html" class="link-btn btn-ghost">Back to login</a>
+                </div>
             </form>
-        </div>
+        </main>
     </div>
 
     <script>
@@ -56,10 +56,10 @@
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username, email, password })
                 });
+
                 const data = await res.json().catch(() => ({}));
 
                 if (res.ok || res.status === 409) {
-                    // 409 = already registered, good enough for now
                     document.getElementById("result").innerText = data.message || "Registered. You can log in now.";
                     setTimeout(() => window.location.href = "login.html", 800);
                 } else {
@@ -69,7 +69,6 @@
                 document.getElementById("result").innerText = "Network error.";
             }
         });
-
     </script>
 </body>
 

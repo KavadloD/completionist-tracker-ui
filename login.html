@@ -1,50 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login – Completionist Tracker</title>
+    <link rel="stylesheet" href="styles.css" />
     <script src="toast.js" defer></script>
-    <title>Login</title>
 </head>
 
-<body>
+<body class="auth-page">
     <div class="container">
-        <div class="topbar">
+        <header class="topbar">
             <div class="brand">Completionist Tracker</div>
-            <div class="nav">
-                <a class="link-btn btn-ghost" href="register.html">Create account</a>
-            </div>
-        </div>
+        </header>
 
-        <div class="panel" style="max-width:520px">
-            <h1>Login</h1>
-            <p class="section" style="color:var(--muted)">Welcome back. Enter your details to continue.</p>
+        <main class="panel">
+            <h1>Log in</h1>
+            <p class="section" style="color: var(--muted);">Access your progress and track your games.</p>
 
             <form id="loginForm">
                 <div class="form-row">
-                    <input type="email" id="email" class="input" placeholder="Email" required>
+                    <input type="email" id="email" class="input" placeholder="Email" required />
                 </div>
                 <div class="form-row">
-                    <input type="password" id="password" class="input" placeholder="Password" required>
+                    <input type="password" id="password" class="input" placeholder="Password" required />
                 </div>
                 <div class="form-row">
                     <button type="submit" class="button">Login</button>
                     <span id="result" class="flash"></span>
                 </div>
+                <div class="form-row">
+                    <a href="register.html" class="link-btn btn-ghost">No account? Create one here</a>
+                </div>
             </form>
-        </div>
+        </main>
     </div>
 
     <script>
         const API = "https://completionist-backend.onrender.com";
 
-        if (localStorage.getItem("ct_user_id")) {
-            window.location.href = "index.html";
-        }
-
         document.getElementById("loginForm").addEventListener("submit", async (e) => {
             e.preventDefault();
+
             const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value;
 
@@ -52,35 +50,17 @@
                 const res = await fetch(`${API}/api/login`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify({ email, password }),
                 });
-                const data = await res.json();
 
-                if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+
+                if (res.ok && data.user_id) {
+                    localStorage.setItem("ct_user_id", data.user_id);
+                    window.location.href = "dashboard.html";
+                } else {
                     document.getElementById("result").innerText = data.message || "Login failed";
-                    return;
                 }
-
-                let uid = data.user_id || data.id || (data.user && (data.user.user_id || data.user.id));
-                if (!uid) {
-                    const q = new URLSearchParams({ email });
-                    const look = await fetch(`${API}/api/users/lookup?${q.toString()}`);
-                    if (look.ok) {
-                        const u = await look.json();
-                        uid = u.user_id;
-                    }
-                }
-
-                if (!uid) {
-                    document.getElementById("result").innerText = "No user_id returned. Add it to /api/login or enable /api/users/lookup.";
-                    return;
-                }
-
-                localStorage.setItem("ct_user_id", String(uid));
-                localStorage.setItem("ct_email", email);
-                if (data.token) localStorage.setItem("ct_token", data.token);
-
-                window.location.href = "index.html";
             } catch {
                 document.getElementById("result").innerText = "Network error.";
             }
