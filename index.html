@@ -56,9 +56,82 @@
         const API = "https://completionist-backend.onrender.com";
         const userId = Number(localStorage.getItem("ct_user_id") || 0);
 
-        const platforms = ["PC", "PlayStation", "Xbox", "Switch", "Mobile"];
-        const genres = ["RPG", "Action", "Adventure", "Platformer", "Puzzle"];
-        const runTypes = ["100% Completion", "Minimalist", "Challenge Run", "Speedrun", "Custom"];
+        const platforms = [
+            "PC",
+            "PlayStation",
+            "PlayStation 2",
+            "PlayStation 3",
+            "PlayStation 4",
+            "PlayStation 5",
+            "Xbox",
+            "Xbox 360",
+            "Xbox One",
+            "Xbox Series X/S",
+            "Nintendo Switch",
+            "Wii",
+            "Wii U",
+            "GameCube",
+            "Nintendo 64",
+            "SNES",
+            "NES",
+            "Game Boy",
+            "Game Boy Advance",
+            "Nintendo DS",
+            "Nintendo 3DS",
+            "PSP",
+            "PS Vita",
+            "Mobile",
+            "Other"
+        ];
+
+        const genres = [
+            "RPG",
+            "JRPG",
+            "Action",
+            "Adventure",
+            "Action-Adventure",
+            "Platformer",
+            "Puzzle",
+            "Metroidvania",
+            "Shooter",
+            "First-Person Shooter",
+            "Third-Person Shooter",
+            "Fighting",
+            "Racing",
+            "Strategy",
+            "Real-Time Strategy",
+            "Turn-Based Strategy",
+            "Simulation",
+            "Sports",
+            "Stealth",
+            "Survival",
+            "Survival Horror",
+            "Visual Novel",
+            "Rhythm",
+            "Sandbox",
+            "Open World",
+            "MMORPG",
+            "Roguelike",
+            "Roguelite",
+            "Card Game",
+            "Other"
+        ];
+
+        const runTypes = [
+            "100% Completion",
+            "Any%",
+            "Minimalist",
+            "Low% Run",
+            "Challenge Run",
+            "No Damage",
+            "No Death",
+            "Permadeath / Ironman",
+            "Speedrun",
+            "Glitchless",
+            "Casual",
+            "New Game+",
+            "Custom"
+        ];
 
         window.onload = () => {
             initDropdowns();
