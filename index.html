@@ -189,8 +189,11 @@
                 ${tagHTML ? `<div class="tags" style="margin-top:4px">${tagHTML}</div>` : ""}
             </div>
             <div style="text-align:right">
-            <div class="progress" style="font-size:16px; font-weight:600">
-                ${game.progress || 0}%
+            <div class="progress-pill">${game.progress || 0}%</div>
+            <div class="progress-wrap">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width:${game.progress || 0}%"></div>
+            </div>
             </div>
             <div style="margin-top:10px">
                 <div class="btn-group" style="display:flex; gap:6px">
