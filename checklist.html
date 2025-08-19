@@ -73,14 +73,18 @@
                 li.dataset.id = id;
 
                 li.innerHTML = `
-          <label class="check-row">
-            <input type="checkbox" class="toggle" ${item.completed ? "checked" : ""}>
-            <input type="text" class="edit input" value="${item.description}">
-          </label>
-          <div style="display:flex; justify-content: flex-end;">
-            <button class="button btn-delete del">Delete</button>
-          </div>
-        `;
+                    <div class="check-row">
+                        <input type="checkbox" class="toggle" ${item.completed ? "checked" : ""}>
+                        <span class="desc">${item.description}</span>
+                        <input type="text" class="edit input" value="${item.description}" style="display:none;">
+                    </div>
+                    <div style="display:flex; justify-content: flex-end; gap:0.5rem;">
+                        <button class="button btn-edit edit-btn">Edit</button>
+                        <button class="button btn-save save-btn" style="display:none;">Save</button>
+                        <button class="button btn-cancel cancel-btn" style="display:none;">Cancel</button>
+                        <button class="button btn-delete del">Delete</button>
+                    </div>
+                `;
                 itemsEl.appendChild(li);
             }
         }
@@ -118,6 +122,7 @@
             await refreshAll();
         }
 
+        // Checkbox toggle
         itemsEl.addEventListener("change", async (e) => {
             if (!e.target.classList.contains("toggle")) return;
             const li = e.target.closest("li");
@@ -131,25 +136,60 @@
             loadProgress();
         });
 
-        itemsEl.addEventListener("keydown", async (e) => {
-            if (e.key !== "Enter" || !e.target.classList.contains("edit")) return;
-            const li = e.target.closest("li");
-            const id = li.dataset.id;
-            const description = e.target.value.trim();
-            await fetch(`${API}/api/checklist/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ description })
-            });
-            e.target.blur();
-        });
-
+        // Button interactions (edit, save, cancel, delete)
         itemsEl.addEventListener("click", async (e) => {
-            if (!e.target.classList.contains("del")) return;
             const li = e.target.closest("li");
+            if (!li) return;
             const id = li.dataset.id;
-            await fetch(`${API}/api/checklist/${id}`, { method: "DELETE" });
-            refreshAll();
+            const descSpan = li.querySelector(".desc");
+            const editInput = li.querySelector(".edit");
+            const editBtn = li.querySelector(".edit-btn");
+            const saveBtn = li.querySelector(".save-btn");
+            const cancelBtn = li.querySelector(".cancel-btn");
+
+            if (e.target.classList.contains("edit-btn")) {
+                // Switch to edit mode
+                descSpan.style.display = "none";
+                editInput.style.display = "inline-block";
+                editBtn.style.display = "none";
+                saveBtn.style.display = "inline-block";
+                cancelBtn.style.display = "inline-block";
+                editInput.focus();
+            }
+
+            if (e.target.classList.contains("cancel-btn")) {
+                // Cancel edit
+                editInput.value = descSpan.textContent;
+                descSpan.style.display = "inline";
+                editInput.style.display = "none";
+                editBtn.style.display = "inline-block";
+                saveBtn.style.display = "none";
+                cancelBtn.style.display = "none";
+            }
+
+            if (e.target.classList.contains("save-btn")) {
+                // Save update
+                const description = editInput.value.trim();
+                if (description && description !== descSpan.textContent) {
+                    await fetch(`${API}/api/checklist/${id}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ description })
+                    });
+                    descSpan.textContent = description;
+                }
+                descSpan.style.display = "inline";
+                editInput.style.display = "none";
+                editBtn.style.display = "inline-block";
+                saveBtn.style.display = "none";
+                cancelBtn.style.display = "none";
+            }
+
+            if (e.target.classList.contains("del")) {
+                // Delete item
+                await fetch(`${API}/api/checklist/${id}`, { method: "DELETE" });
+                refreshAll();
+            }
         });
 
         addBtn.addEventListener("click", addItem);
@@ -164,23 +204,19 @@
             const fallback = () => { h1.textContent = "Game Checklist"; };
 
             try {
-                // Try a direct game lookup
                 const r1 = await fetch(`${API}/api/games/${GAME_ID}`);
                 if (r1.ok) {
                     let g = await r1.json();
-                    // If the API returns an array for some reason, grab the first
                     if (Array.isArray(g)) g = g[0] || {};
                     const title = (g.title || "").trim();
                     const run = (g.run_type || "").trim();
                     if (title) {
-                        const label = run ? `${title} \u2013 ${run}` : title; // \u2013 = en dash
+                        const label = run ? `${title} \u2013 ${run}` : title;
                         h1.textContent = label;
                         document.title = `${label} – Checklist`;
                         return;
                     }
                 }
-
-                // Fallback: fetch user’s games and find by id
                 if (userId) {
                     const r2 = await fetch(`${API}/api/games?user_id=${userId}`);
                     if (r2.ok) {
@@ -194,16 +230,14 @@
                         }
                     }
                 }
-
                 fallback();
             } catch {
                 fallback();
             }
         }
 
-        // Call it once on page load
+        // Initialize
         loadGameTitle();
-
         refreshAll();
     </script>
 </body>
