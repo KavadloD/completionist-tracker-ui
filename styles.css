@@ -488,11 +488,25 @@ a:hover {
     height: 1.25rem;
     cursor: pointer;
     accent-color: var(--accent);
-    /* uses your ghost-blue */
     transition: transform 0.15s ease;
 }
 
 #items .toggle:checked {
     transform: scale(1.2);
     /* subtle pop when checked */
+}
+
+#items .check-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+}
+
+#items .check-row:hover {
+    background: rgba(255, 255, 255, 0.05);
 }
