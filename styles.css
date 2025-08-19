@@ -103,12 +103,18 @@ body {
 
 .brand {
     font-family: 'Stormfaze', sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: .3px;
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: 1px;
     text-decoration: none;
     color: inherit;
     cursor: pointer;
+    line-height: 1.5;
+}
+
+.brand:hover {
+    text-decoration: none;
+    /* or pick a highlight color */
 }
 
 .nav {
