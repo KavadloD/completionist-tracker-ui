@@ -1,3 +1,12 @@
+/*Stormfaze Typeface*/
+@font-face {
+    font-family: 'Stormfaze';
+    src: url('fonts/Stormfaze.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+
 /* Layout */
 :root {
     --bg: #121212;
@@ -93,9 +102,13 @@ body {
 }
 
 .brand {
+    font-family: 'Stormfaze', sans-serif;
     font-size: 22px;
     font-weight: 700;
     letter-spacing: .3px;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
 }
 
 .nav {
