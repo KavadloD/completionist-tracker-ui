@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="utf-8">
@@ -12,7 +12,7 @@
 <body>
     <div class="container">
         <div class="topbar">
-            <div class="brand">Completionist Tracker</div>
+            <a href="index.html" class="brand">Completionist Tracker</a>
             <nav class="nav">
                 <a class="link-btn btn-ghost" href="index.html">Dashboard</a>
                 <a class="link-btn btn-ghost" href="community.html">Community</a>
@@ -20,142 +20,145 @@
             </nav>
         </div>
 
-        <div class="panel">
-            <h1>Game checklist</h1>
-            <div class="section"><span id="progressText" class="progress">Progress: ...</span></div>
+        <div class="panel wide-panel">
+            <h1>Game Checklist</h1>
+            <p class="section" style="color: var(--muted)">
+                Track your progress for individual game goals.
+            </p>
+
+            <div class="section">
+                <span id="progressText" class="progress">Progress: ...</span>
+            </div>
 
             <div class="form-row">
-                <input id="descriptionInput" class="input" placeholder="New item description">
-                <button id="addBtn" class="button">Add item</button>
+                <input id="descriptionInput" class="input" placeholder="New checklist item" autocomplete="off">
+                <button id="addBtn" class="button">Add</button>
             </div>
         </div>
 
         <div class="section">
             <ul id="items" class="list"></ul>
         </div>
+    </div>
 
-        <script>
-            const API = "https://completionist-backend.onrender.com";
+    <script>
+        const API = "https://completionist-backend.onrender.com";
+        const params = new URLSearchParams(window.location.search);
+        const GAME_ID = Number(params.get("game_id") || 0);
 
-            const params = new URLSearchParams(window.location.search);
-            const GAME_ID = Number(params.get("game_id") || 0);
+        if (!GAME_ID) {
+            toast("Missing game ID, returning to dashboard", "error");
+            window.location.href = "index.html";
+        }
 
-            if (!GAME_ID) {
-                toast("Missing game ID, returning to dashboard", "error");
-                window.location.href = "index.html";
+        const itemsEl = document.getElementById("items");
+        const inputEl = document.getElementById("descriptionInput");
+        const addBtn = document.getElementById("addBtn");
+        const progressEl = document.getElementById("progressText");
+
+        async function loadChecklist() {
+            const res = await fetch(`${API}/api/games/${GAME_ID}/checklist`);
+            const list = await res.json().catch(() => []);
+            itemsEl.innerHTML = "";
+
+            if (!Array.isArray(list) || list.length === 0) {
+                itemsEl.innerHTML = "<li style='color: var(--muted);'>No items yet.</li>";
+                return;
             }
 
-            const itemsEl = document.getElementById("items");
-            const descriptionInput = document.getElementById("descriptionInput");
-            const addBtn = document.getElementById("addBtn");
-            const progressEl = document.getElementById("progressText");
+            for (const item of list) {
+                const id = item.checklist_item_id || item.id;
+                const li = document.createElement("li");
+                li.className = "card item";
+                li.dataset.id = id;
 
-            async function loadChecklist() {
-                const res = await fetch(`${API}/api/games/${GAME_ID}/checklist`);
-                const list = await res.json().catch(() => []);
-                itemsEl.innerHTML = "";
-
-                if (!Array.isArray(list) || list.length === 0) {
-                    itemsEl.innerHTML = "<li>No items yet.</li>";
-                    return;
-                }
-
-                for (const it of list) {
-                    const id = it.checklist_item_id || it.id;
-                    const li = document.createElement("li");
-                    li.dataset.id = id;
-                    li.style.marginBottom = "10px";
-                    li.style.padding = "10px";
-                    li.style.backgroundColor = "#2e2e2e";
-                    li.style.borderRadius = "6px";
-
-                    li.innerHTML = `
-                    <label style="display: flex; align-items: center; gap: 10px;">
-                        <input type="checkbox" class="toggle" ${it.completed ? "checked" : ""}>
-                        <input type="text" class="edit input" value="${it.description}" style="flex: 1;">
-                    </label>
-                    <button class="button btn-secondary del" style="margin-top: 5px;">Delete</button>
-                `;
-                    itemsEl.appendChild(li);
-                }
+                li.innerHTML = `
+          <label class="check-row">
+            <input type="checkbox" class="toggle" ${item.completed ? "checked" : ""}>
+            <input type="text" class="edit input" value="${item.description}">
+          </label>
+          <div style="display:flex; justify-content: flex-end;">
+            <button class="button btn-delete del">Delete</button>
+          </div>
+        `;
+                itemsEl.appendChild(li);
             }
+        }
 
-            async function loadProgress() {
-                try {
-                    const res = await fetch(`${API}/api/games/${GAME_ID}/progress`);
-                    if (!res.ok) return;
-                    const p = await res.json();
-                    progressEl.textContent = `Progress: ${p.completed}/${p.total} items, ${p.percent}% complete`;
-                } catch { }
+        async function loadProgress() {
+            try {
+                const res = await fetch(`${API}/api/games/${GAME_ID}/progress`);
+                if (!res.ok) return;
+                const p = await res.json();
+                progressEl.textContent = `Progress: ${p.completed}/${p.total} items, ${p.percent}% complete`;
+            } catch {
+                progressEl.textContent = "Progress: ...";
             }
+        }
 
-            async function refreshAll() {
-                await loadChecklist();
-                await loadProgress();
-            }
+        async function refreshAll() {
+            await loadChecklist();
+            await loadProgress();
+        }
 
-            async function addItem() {
-                const description = descriptionInput.value.trim();
-                if (!description) return;
-                const res = await fetch(`${API}/api/games/${GAME_ID}/checklist`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ description, completed: false })
-                });
-                if (!res.ok) {
-                    const data = await res.json().catch(() => ({}));
-                    toast(data.message || "Failed to add item", "error");
-                    return;
-                }
-                descriptionInput.value = "";
-                await refreshAll();
-            }
-
-            itemsEl.addEventListener("change", async (e) => {
-                if (!e.target.classList.contains("toggle")) return;
-                const li = e.target.closest("li");
-                const id = li.dataset.id;
-                const completed = e.target.checked;
-                await fetch(`${API}/api/checklist/${id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ completed })
-                });
-                loadProgress();
+        async function addItem() {
+            const description = inputEl.value.trim();
+            if (!description) return;
+            const res = await fetch(`${API}/api/games/${GAME_ID}/checklist`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ description, completed: false })
             });
-
-            itemsEl.addEventListener("keydown", async (e) => {
-                if (e.key !== "Enter" || !e.target.classList.contains("edit")) return;
-                const li = e.target.closest("li");
-                const id = li.dataset.id;
-                const description = e.target.value.trim();
-                await fetch(`${API}/api/checklist/${id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ description })
-                });
-                e.target.blur();
-            });
-
-            itemsEl.addEventListener("click", async (e) => {
-                if (!e.target.classList.contains("del")) return;
-                const li = e.target.closest("li");
-                const id = li.dataset.id;
-                await fetch(`${API}/api/checklist/${id}`, { method: "DELETE" });
-                refreshAll();
-            });
-
-            addBtn.addEventListener("click", addItem);
-
-            const inputEl = document.getElementById('descriptionInput');
-            if (inputEl) {
-                inputEl.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') addItem();
-                });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                toast(data.message || "Failed to add item", "error");
+                return;
             }
+            inputEl.value = "";
+            await refreshAll();
+        }
 
+        itemsEl.addEventListener("change", async (e) => {
+            if (!e.target.classList.contains("toggle")) return;
+            const li = e.target.closest("li");
+            const id = li.dataset.id;
+            const completed = e.target.checked;
+            await fetch(`${API}/api/checklist/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ completed })
+            });
+            loadProgress();
+        });
+
+        itemsEl.addEventListener("keydown", async (e) => {
+            if (e.key !== "Enter" || !e.target.classList.contains("edit")) return;
+            const li = e.target.closest("li");
+            const id = li.dataset.id;
+            const description = e.target.value.trim();
+            await fetch(`${API}/api/checklist/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ description })
+            });
+            e.target.blur();
+        });
+
+        itemsEl.addEventListener("click", async (e) => {
+            if (!e.target.classList.contains("del")) return;
+            const li = e.target.closest("li");
+            const id = li.dataset.id;
+            await fetch(`${API}/api/checklist/${id}`, { method: "DELETE" });
             refreshAll();
-        </script>
+        });
+
+        addBtn.addEventListener("click", addItem);
+        inputEl.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") addItem();
+        });
+
+        refreshAll();
+    </script>
 </body>
 
 </html>
