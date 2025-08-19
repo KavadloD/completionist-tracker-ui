@@ -69,22 +69,22 @@
             for (const item of list) {
                 const id = item.checklist_item_id || item.id;
                 const li = document.createElement("li");
-                li.className = "card item";
+                li.className = `card item ${item.completed ? "done" : ""}`;
                 li.dataset.id = id;
 
                 li.innerHTML = `
-            <label class="check-row">
-                <input type="checkbox" class="toggle" ${item.completed ? "checked" : ""}>
-                <span class="desc">${item.description}</span>
-                <input type="text" class="edit input" value="${item.description}" style="display:none;">
-            </label>
-            <div style="display:flex; justify-content: flex-end; gap:0.5rem;">
-                <button class="button btn-edit edit-btn">Edit</button>
-                <button class="button btn-save save-btn" style="display:none;">Save</button>
-                <button class="button btn-cancel cancel-btn" style="display:none;">Cancel</button>
-                <button class="button btn-delete del">Delete</button>
-            </div>
-        `;
+                    <label class="check-row">
+                        <input type="checkbox" class="toggle" ${item.completed ? "checked" : ""}>
+                        <span class="desc">${item.description}</span>
+                        <input type="text" class="edit input" value="${item.description}" style="display:none;">
+                    </label>
+                    <div style="display:flex; justify-content: flex-end; gap:0.5rem;">
+                        <button class="button btn-edit edit-btn">Edit</button>
+                        <button class="button btn-save save-btn" style="display:none;">Save</button>
+                        <button class="button btn-cancel cancel-btn" style="display:none;">Cancel</button>
+                        <button class="button btn-delete del">Delete</button>
+                    </div>
+                `;
                 itemsEl.appendChild(li);
             }
         }
@@ -129,6 +129,9 @@
             const li = e.target.closest("li");
             const id = li.dataset.id;
             const completed = e.target.checked;
+
+            li.classList.toggle("done", completed); // toggle strike-through
+
             await fetch(`${API}/api/checklist/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
@@ -136,6 +139,7 @@
             });
             loadProgress();
         });
+
 
         // Button interactions (edit, save, cancel, delete)
         itemsEl.addEventListener("click", async (e) => {

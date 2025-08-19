@@ -6,7 +6,6 @@
     font-style: normal;
 }
 
-
 /* Layout */
 :root {
     --bg: #121212;
@@ -30,20 +29,12 @@ html,
 body {
     height: 100%;
     margin: 0;
-    padding: 0;
-    background-color: var(--bg);
-    font-family: 'Segoe UI', sans-serif;
+    padding: 32px 20px 80px;
+    background: radial-gradient(1000px 500px at 50% -20%, #1c1c1c 0%, #121212 80%);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     color: var(--text);
     display: flex;
     flex-direction: column;
-}
-
-body {
-    font-family: Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    background: radial-gradient(1000px 500px at 50% -20%, #1c1c1c 0%, #121212 80%);
-    color: var(--text);
-    margin: 0;
-    padding: 32px 20px 80px;
 }
 
 /* === AUTH PAGE ONLY === */
@@ -84,7 +75,6 @@ body {
     font-size: 14px;
 }
 
-
 /* General Container */
 .container {
     width: 100%;
@@ -115,7 +105,6 @@ body {
 
 .brand:hover {
     text-decoration: none;
-    /* or pick a highlight color */
 }
 
 .nav {
@@ -194,7 +183,6 @@ input:focus {
 }
 
 /* Buttons */
-/* Base Button Styles */
 .button,
 button,
 .link-btn {
@@ -209,7 +197,6 @@ button,
     transition: transform 0.04s ease, opacity 0.15s ease, filter 0.15s ease;
 }
 
-/* Hover State */
 .button:hover,
 button:hover,
 .link-btn:hover {
@@ -217,19 +204,16 @@ button:hover,
     filter: brightness(1.1);
 }
 
-/* Active Click Feedback */
 .button:active,
 button:active {
     transform: translateY(1px);
 }
 
-/* Button Group Spacing */
 .button+.button,
 button+.button {
     margin-left: 6px;
 }
 
-/* Secondary Button */
 .btn-secondary {
     background: #333;
     color: #eee;
@@ -239,7 +223,6 @@ button+.button {
     background: #444;
 }
 
-/* Ghost Button */
 .btn-ghost {
     background: transparent;
     border: 1px solid rgba(74, 144, 226, .8);
@@ -251,7 +234,6 @@ button+.button {
     color: #e8f1ff;
 }
 
-/* Checklist Button (Green) */
 .btn-checklist {
     background: var(--primary);
     color: #fff;
@@ -261,7 +243,6 @@ button+.button {
     filter: brightness(1.1);
 }
 
-/* Delete Button (Red) */
 .btn-delete {
     background: #E94560;
     color: #fff;
@@ -340,7 +321,6 @@ a:hover {
     transition: width 0.25s ease;
 }
 
-/* Flash text */
 .flash {
     margin-left: 8px;
     color: var(--muted);
@@ -450,7 +430,6 @@ a:hover {
     gap: 0.75rem;
     flex: 1;
     min-width: 0;
-    /* allows truncation */
 }
 
 #items .desc {
@@ -458,16 +437,13 @@ a:hover {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    /* keeps it on one line */
 }
 
 #items .edit {
     flex: 1;
     max-width: 70%;
-    /* prevents breaking the layout */
     padding: 0.25rem 0.5rem;
     height: 2rem;
-    /* makes the edit input less tall */
     font-size: 0.95rem;
 }
 
@@ -493,7 +469,6 @@ a:hover {
 
 #items .toggle:checked {
     transform: scale(1.2);
-    /* subtle pop when checked */
 }
 
 #items .check-row {
@@ -509,4 +484,9 @@ a:hover {
 
 #items .check-row:hover {
     background: rgba(255, 255, 255, 0.05);
+}
+
+.item.done .desc {
+    text-decoration: line-through;
+    color: var(--muted);
 }
