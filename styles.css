@@ -312,6 +312,26 @@ a:hover {
     font-weight: 700;
 }
 
+.progress-wrap {
+    margin-top: 6px;
+    min-width: 220px;
+}
+
+.progress-bar {
+    height: 6px;
+    background: #1a1a1a;
+    border: 1px solid #2b2b2b;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--primary);
+    transition: width 0.25s ease;
+}
+
 /* Flash text */
 .flash {
     margin-left: 8px;
