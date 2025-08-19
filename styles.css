@@ -434,5 +434,5 @@ a:hover {
     user-select: none;
     cursor: grab;
     color: var(--muted);
-    padding-right: 8px;
+    font-size: 20px;
 }
