@@ -21,7 +21,7 @@
         </div>
 
         <div class="panel wide-panel">
-            <h1>Game Checklist</h1>
+            <h1 id="gameTitle">Game Checklist</h1>
             <p class="section" style="color: var(--muted)">
                 Track your progress for individual game goals.
             </p>
@@ -156,6 +156,53 @@
         inputEl.addEventListener("keydown", (e) => {
             if (e.key === "Enter") addItem();
         });
+
+        const userId = Number(localStorage.getItem("ct_user_id") || 0);
+
+        async function loadGameTitle() {
+            const h1 = document.getElementById("gameTitle");
+            const fallback = () => { h1.textContent = "Game Checklist"; };
+
+            try {
+                // Try a direct game lookup
+                const r1 = await fetch(`${API}/api/games/${GAME_ID}`);
+                if (r1.ok) {
+                    let g = await r1.json();
+                    // If the API returns an array for some reason, grab the first
+                    if (Array.isArray(g)) g = g[0] || {};
+                    const title = (g.title || "").trim();
+                    const run = (g.run_type || "").trim();
+                    if (title) {
+                        const label = run ? `${title} \u2013 ${run}` : title; // \u2013 = en dash
+                        h1.textContent = label;
+                        document.title = `${label} – Checklist`;
+                        return;
+                    }
+                }
+
+                // Fallback: fetch user’s games and find by id
+                if (userId) {
+                    const r2 = await fetch(`${API}/api/games?user_id=${userId}`);
+                    if (r2.ok) {
+                        const list = await r2.json().catch(() => []);
+                        const g = Array.isArray(list) ? list.find(x => Number(x.game_id) === GAME_ID) : null;
+                        if (g && g.title) {
+                            const label = g.run_type ? `${g.title} \u2013 ${g.run_type}` : g.title;
+                            h1.textContent = label;
+                            document.title = `${label} – Checklist`;
+                            return;
+                        }
+                    }
+                }
+
+                fallback();
+            } catch {
+                fallback();
+            }
+        }
+
+        // Call it once on page load
+        loadGameTitle();
 
         refreshAll();
     </script>
