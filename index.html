@@ -188,7 +188,7 @@
                     ${game.platform || ""}${game.platform && game.genre ? " | " : ""}${game.genre || ""}
                 </div>
                 </div>
-                
+
                 ${tagHTML ? `<div class="tags" style="margin-top:4px">${tagHTML}</div>` : ""}
             </div>
             <div style="text-align:right">
@@ -208,7 +208,7 @@
             </div>
           </div>
         `;
-                container.appendChild(div);
+                container.prepend(div);
             });
         }
 
