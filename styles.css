@@ -87,9 +87,10 @@ body {
 
 /* General Container */
 .container {
+    width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 0 20px;
 }
 
 /* Topbar */
@@ -404,13 +405,13 @@ a:hover {
 }
 
 .wide-panel {
-    max-width: 1000px;
+    max-width: none;
     width: 100%;
-    margin: 0 auto;
     padding: 32px;
-    background: var(--surface);
-    border-radius: 12px;
-    box-shadow: var(--shadow);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 /*Tags*/
