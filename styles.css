@@ -405,3 +405,20 @@ a:hover {
     flex-direction: column;
     gap: 20px;
 }
+
+/*Tags*/
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.tag {
+    display: inline-block;
+    background: #232323;
+    border: 1px solid #2b2b2b;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--muted);
+}
