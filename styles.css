@@ -129,6 +129,7 @@ body {
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     padding: 18px;
+    margin-bottom: 24px;
 }
 
 .card {
@@ -240,14 +241,13 @@ button+.button {
 /* Ghost Button */
 .btn-ghost {
     background: transparent;
-    border: 1px solid var(--accent);
+    border: 1px solid rgba(74, 144, 226, .8);
     color: var(--accent);
 }
 
 .btn-ghost:hover {
-    background-color: rgba(74, 144, 226, 0.15);
-    border-color: var(--accent);
-    color: var(--text);
+    background-color: rgba(74, 144, 226, .12);
+    color: #e8f1ff;
 }
 
 /* Checklist Button (Green) */
