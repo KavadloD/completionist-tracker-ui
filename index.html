@@ -191,8 +191,115 @@
             }
         }
 
+        let editingGameId = null;
+
         function editGame(id) {
-            window.location.href = `checklist.html?game_id=${id}`;
+            if (editingGameId) return; // prevent multiple rows in edit mode
+            editingGameId = id;
+
+            // find the card DOM for this game
+            const cards = Array.from(document.querySelectorAll("#gameList .card.item"));
+            const idx = cards.findIndex(card =>
+                card.querySelector(`.btn-checklist[href$="game_id=${id}"]`)
+            );
+            if (idx === -1) return;
+
+            const card = cards[idx];
+
+            // read current values from the card (fallbacks if empty)
+            const titleText = card.querySelector("div[style*='font-weight:700']").textContent.trim();
+            // titleText may be "Title – Run Type"
+            const [titleOnly, runTypeAfter] = titleText.split(" – ");
+            const meta = card.querySelector("div[style*='color:var(--muted)']").textContent || "";
+            const [platformCur, genreCur] = meta.split("|").map(s => (s || "").trim());
+            const tagsCur = Array.from(card.querySelectorAll(".tag"))
+                .map(t => t.textContent.replace(/^#/, "").trim())
+                .join(", ");
+
+            const rtCur = runTypeAfter || "";
+
+            // build selects with current values selected
+            const platformSelect = buildSelect("edit_platform", platforms, platformCur);
+            const genreSelect = buildSelect("edit_genre", genres, genreCur);
+            const runTypeSelect = buildSelect("edit_run_type", runTypes, rtCur);
+
+            card.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <input id="edit_title" class="input" placeholder="Game Title" value="${escapeHtml(titleOnly || "")}" style="flex:2;min-width:240px">
+        ${runTypeSelect}
+        ${platformSelect}
+        ${genreSelect}
+        <input id="edit_tags" class="input" placeholder="Tags (comma-separated)" value="${escapeHtml(tagsCur)}" style="flex:2;min-width:240px">
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" class="button" onclick="saveEdit(${id})">Save</button>
+        <button type="button" class="button btn-ghost" onclick="cancelEdit()">Cancel</button>
+      </div>
+    </div>
+  `;
+        }
+
+        function buildSelect(id, options, current) {
+            const opts = ['<option value="">Select</option>']
+                .concat(options.map(o => `<option value="${escapeHtml(o)}"${o === current ? " selected" : ""}>${escapeHtml(o)}</option>`))
+                .join("");
+            return `<select id="${id}" class="input" style="flex:1;min-width:160px">${opts}</select>`;
+        }
+
+        function escapeHtml(s) {
+            return String(s || "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+
+        async function saveEdit(id) {
+            const title = document.getElementById("edit_title").value.trim();
+            const platform = document.getElementById("edit_platform").value.trim();
+            const genre = document.getElementById("edit_genre").value.trim();
+            const run_type = document.getElementById("edit_run_type").value.trim();
+            const tags = document.getElementById("edit_tags").value.trim();
+
+            if (!title) {
+                toast("Title is required.", "error");
+                return;
+            }
+
+            const payload = {
+                title,
+                platform: platform || null,
+                genre: genre || null,
+                run_type: run_type || null,
+                tags: tags || null
+            };
+
+            try {
+                const res = await fetch(`${API}/api/games/${id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json().catch(() => ({}));
+
+                if (res.ok) {
+                    toast("Game updated.", "success");
+                    editingGameId = null;
+                    loadGames();
+                } else {
+                    toast(data.message || "Update failed.", "error");
+                }
+            } catch (e) {
+                console.error(e);
+                toast("Network error.", "error");
+            }
+        }
+
+        function cancelEdit() {
+            editingGameId = null;
+            loadGames(); // re-render original card
         }
     </script>
 
