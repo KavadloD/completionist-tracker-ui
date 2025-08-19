@@ -114,14 +114,16 @@
                 ${tagHTML ? `<div class="tags" style="margin-top:4px">${tagHTML}</div>` : ""}
             </div>
             <div style="text-align:right">
-              <div class="progress" style="font-size:16px;font-weight:600">${game.progress || 0}%</div>
-              <div style="margin-top:10px">
-                <div class="btn-group">
-                    <a href="..." class="button btn-checklist">Checklist</a>
-                    <button class="button btn-ghost">Edit</button>
-                    <button class="button btn-delete">Delete</button>
+            <div class="progress" style="font-size:16px; font-weight:600">
+                ${game.progress || 0}%
+            </div>
+            <div style="margin-top:10px">
+                <div class="btn-group" style="display:flex; gap:6px">
+                <a href="checklist.html?game_id=${game.game_id}" class="button btn-checklist">Checklist</a>
+                <button type="button" class="button btn-ghost" onclick="editGame(${game.game_id})">Edit</button>
+                <button type="button" class="button btn-delete" onclick="deleteGame(${game.game_id})">Delete</button>
                 </div>
-              </div>
+            </div>
             </div>
           </div>
         `;
