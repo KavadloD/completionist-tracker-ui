@@ -429,10 +429,3 @@ a:hover {
     font-size: 12px;
     color: var(--muted);
 }
-
-.drag-handle {
-    user-select: none;
-    cursor: grab;
-    color: var(--muted);
-    font-size: 20px;
-}
