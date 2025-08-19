@@ -136,7 +136,7 @@ body {
     background: var(--panel-2);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 18px 16px;
+    padding: 20px 16px;
     transition: transform 0.06s ease, box-shadow 0.15s ease;
 }
 
