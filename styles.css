@@ -435,3 +435,50 @@ a:hover {
     padding: 4px 8px;
     font-size: 0.9rem;
 }
+
+/* Checklist-only overrides */
+#items .item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+}
+
+#items .check-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 0;
+    /* allows truncation */
+}
+
+#items .desc {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* keeps it on one line */
+}
+
+#items .edit {
+    flex: 1;
+    max-width: 70%;
+    /* prevents breaking the layout */
+    padding: 0.25rem 0.5rem;
+    height: 2rem;
+    /* makes the edit input less tall */
+    font-size: 0.95rem;
+}
+
+/* Button adjustments only inside checklist */
+#items .btn-edit {
+    background: none;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+}
+
+#items .btn-edit:hover {
+    background: var(--accent);
+    color: #fff;
+}
