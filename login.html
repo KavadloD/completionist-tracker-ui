@@ -41,17 +41,14 @@
     <script>
         const API = "https://completionist-backend.onrender.com";
 
-        // If already logged in, bounce to dashboard
+        // If already logged in, skip login
         (function maybeSkipLogin() {
             const token = localStorage.getItem("token");
-            if (token) {
-                location.replace("/");
-            }
+            if (token) location.replace("/");
         })();
 
         document.getElementById("loginForm").addEventListener("submit", async (e) => {
             e.preventDefault();
-
             const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value;
 
@@ -63,11 +60,19 @@
                 });
 
                 const data = await res.json().catch(() => ({}));
+                console.log("LOGIN RESPONSE:", data);
 
-                // Expect backend to return { token, user_id }
-                if (res.ok && data.token) {
-                    localStorage.setItem("token", data.token);
+                // Accept several token field names
+                const token = data.token || data.access_token || data.jwt || null;
+
+                if (res.ok && (token || data.user_id)) {
+                    if (token) localStorage.setItem("token", token);
                     if (data.user_id) localStorage.setItem("ct_user_id", String(data.user_id));
+
+                    if (!token) {
+                        document.getElementById("result").innerText =
+                            "Server didn’t return a token; using limited session. Ask your backend to return a JWT.";
+                    }
 
                     const dest = sessionStorage.getItem("redirectAfterLogin") || "/";
                     try { sessionStorage.removeItem("redirectAfterLogin"); } catch { }
@@ -80,6 +85,7 @@
             }
         });
     </script>
+
 </body>
 
 </html>

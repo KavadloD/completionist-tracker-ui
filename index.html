@@ -16,41 +16,49 @@
     </style>
 
     <!-- Auth guard: runs BEFORE anything else -->
+    <style>
+        html {
+            visibility: hidden
+        }
+    </style>
     <script>
         (async () => {
             const LOGIN_PATH = '/login.html';
             const API = 'https://completionist-backend.onrender.com';
             const token = localStorage.getItem('token');
+            const legacyUserId = localStorage.getItem('ct_user_id');
 
             const rememberDest = () => {
+                try { sessionStorage.setItem('redirectAfterLogin', location.pathname + location.search + location.hash); } catch { }
+            };
+            const toLogin = () => { rememberDest(); location.replace(LOGIN_PATH); };
+
+            // Preferred: token + server verify
+            if (token) {
                 try {
-                    sessionStorage.setItem('redirectAfterLogin', location.pathname + location.search + location.hash);
-                } catch { }
-            };
+                    const res = await fetch(API + '/api/auth/me', { headers: { Authorization: 'Bearer ' + token } });
+                    if (!res.ok) throw new Error('unauthorized');
+                    window.currentUser = await res.json().catch(() => null);
+                    document.documentElement.style.visibility = 'visible';
+                    return;
+                } catch {
+                    localStorage.removeItem('token');
+                    // fall through to legacy branch
+                }
+            }
 
-            const toLogin = () => {
-                rememberDest();
-                location.replace(LOGIN_PATH);
-            };
-
-            if (!token) {
-                toLogin();
+            // Temporary legacy mode: allow if we only have ct_user_id (no token)
+            if (legacyUserId) {
+                console.warn('Running in legacy mode (no token). Add JWT to backend when possible.');
+                document.documentElement.style.visibility = 'visible';
                 return;
             }
 
-            try {
-                const res = await fetch(API + '/api/auth/me', {
-                    headers: { Authorization: 'Bearer ' + token }
-                });
-                if (!res.ok) throw new Error('unauthorized');
-                window.currentUser = await res.json().catch(() => null);
-                document.documentElement.style.visibility = 'visible';
-            } catch {
-                localStorage.removeItem('token');
-                toLogin();
-            }
+            // No session—go to login
+            toLogin();
         })();
     </script>
+
 </head>
 
 <body>
