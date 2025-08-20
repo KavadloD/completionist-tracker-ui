@@ -7,6 +7,52 @@
     <link rel="stylesheet" href="styles.css" />
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <script src="toast.js" defer></script>
+
+    <style>
+        html {
+            visibility: hidden
+        }
+    </style>
+    <script>
+        (async () => {
+            const LOGIN_PATH = '/login.html';
+            const token = localStorage.getItem('token');
+            const legacyUserId = localStorage.getItem('ct_user_id');
+
+            const rememberDest = () => {
+                try {
+                    sessionStorage.setItem('redirectAfterLogin', location.pathname + location.search + location.hash);
+                } catch { }
+            };
+
+            const toLogin = () => {
+                rememberDest();
+                location.replace(LOGIN_PATH);
+            };
+
+            if (token) {
+                try {
+                    const res = await fetch("https://completionist-backend.onrender.com/api/auth/me", {
+                        headers: { Authorization: "Bearer " + token }
+                    });
+                    if (!res.ok) throw new Error("unauthorized");
+                    document.documentElement.style.visibility = "visible";
+                    return;
+                } catch {
+                    localStorage.removeItem("token");
+                }
+            }
+
+            if (legacyUserId) {
+                console.warn("Running in legacy mode (no token)");
+                document.documentElement.style.visibility = "visible";
+                return;
+            }
+
+            toLogin();
+        })();
+    </script>
+
 </head>
 
 <body>
@@ -36,7 +82,10 @@
         const userId = Number(localStorage.getItem("ct_user_id") || 0);
 
         async function loadCommunityChecklists() {
-            const res = await fetch(`${API}/api/community`);
+            const res = await fetch(`${API}/api/community`, {
+                headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+            });
+
             const data = await res.json();
 
             const container = document.getElementById("community-list");
@@ -76,7 +125,11 @@
 
                 const res = await fetch(`${API}/api/community/import/${id}`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: "Bearer " + localStorage.getItem("token")
+                    },
+
                     body: JSON.stringify({ user_id: userId })
                 });
 

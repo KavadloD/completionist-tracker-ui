@@ -7,6 +7,52 @@
     <script src="toast.js" defer></script>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <title>Checklist – Completionist Tracker</title>
+
+    <style>
+        html {
+            visibility: hidden
+        }
+    </style>
+    <script>
+        (async () => {
+            const LOGIN_PATH = '/login.html';
+            const token = localStorage.getItem('token');
+            const legacyUserId = localStorage.getItem('ct_user_id');
+
+            const rememberDest = () => {
+                try {
+                    sessionStorage.setItem('redirectAfterLogin', location.pathname + location.search + location.hash);
+                } catch { }
+            };
+
+            const toLogin = () => {
+                rememberDest();
+                location.replace(LOGIN_PATH);
+            };
+
+            if (token) {
+                try {
+                    const res = await fetch("https://completionist-backend.onrender.com/api/auth/me", {
+                        headers: { Authorization: "Bearer " + token }
+                    });
+                    if (!res.ok) throw new Error("unauthorized");
+                    document.documentElement.style.visibility = "visible";
+                    return;
+                } catch {
+                    localStorage.removeItem("token");
+                }
+            }
+
+            if (legacyUserId) {
+                console.warn("Running in legacy mode (no token)");
+                document.documentElement.style.visibility = "visible";
+                return;
+            }
+
+            toLogin();
+        })();
+    </script>
+
 </head>
 
 <body>
@@ -43,6 +89,8 @@
 
     <script>
         const API = "https://completionist-backend.onrender.com";
+        const token = localStorage.getItem("token") || "";
+        const userId = Number(localStorage.getItem("ct_user_id") || 0);
         const params = new URLSearchParams(window.location.search);
         const GAME_ID = Number(params.get("game_id") || 0);
 
@@ -57,42 +105,50 @@
         const progressEl = document.getElementById("progressText");
 
         async function loadChecklist() {
-            const res = await fetch(`${API}/api/games/${GAME_ID}/checklist`);
-            const list = await res.json().catch(() => []);
-            itemsEl.innerHTML = "";
+            try {
+                const res = await fetch(`${API}/api/games/${GAME_ID}/checklist`, {
+                    headers: { Authorization: "Bearer " + token }
+                });
+                if (res.status === 401) return handleUnauthorized();
 
-            if (!Array.isArray(list) || list.length === 0) {
-                itemsEl.innerHTML = "<li style='color: var(--muted);'>No items yet.</li>";
-                return;
-            }
+                const list = await res.json().catch(() => []);
+                itemsEl.innerHTML = "";
 
-            for (const item of list) {
-                const id = item.checklist_item_id || item.id;
-                const li = document.createElement("li");
-                li.className = `card item ${item.completed ? "done" : ""}`;
-                li.dataset.id = id;
+                if (!Array.isArray(list) || list.length === 0) {
+                    itemsEl.innerHTML = "<li style='color: var(--muted);'>No items yet.</li>";
+                    return;
+                }
 
-                li.innerHTML = `
-                    <label class="check-row">
-                        <input type="checkbox" class="toggle" ${item.completed ? "checked" : ""}>
-                        <span class="desc">${item.description}</span>
-                        <input type="text" class="edit input" value="${item.description}" style="display:none;">
-                    </label>
-                    <div style="display:flex; justify-content: flex-end; gap:0.5rem;">
-                        <button class="button btn-edit edit-btn">Edit</button>
-                        <button class="button btn-save save-btn" style="display:none;">Save</button>
-                        <button class="button btn-cancel cancel-btn" style="display:none;">Cancel</button>
-                        <button class="button btn-delete del">Delete</button>
-                    </div>
-                `;
-                itemsEl.appendChild(li);
+                for (const item of list) {
+                    const id = item.checklist_item_id || item.id;
+                    const li = document.createElement("li");
+                    li.className = `card item ${item.completed ? "done" : ""}`;
+                    li.dataset.id = id;
+
+                    li.innerHTML = `
+        <label class="check-row">
+          <input type="checkbox" class="toggle" ${item.completed ? "checked" : ""}>
+          <span class="desc">${item.description}</span>
+          <input type="text" class="edit input" value="${item.description}" style="display:none;">
+        </label>
+        <div style="display:flex; justify-content: flex-end; gap:0.5rem;">
+          <button class="button btn-edit edit-btn">Edit</button>
+          <button class="button btn-save save-btn" style="display:none;">Save</button>
+          <button class="button btn-cancel cancel-btn" style="display:none;">Cancel</button>
+          <button class="button btn-delete del">Delete</button>
+        </div>`;
+                    itemsEl.appendChild(li);
+                }
+            } catch (e) {
+                toast("Error loading checklist", "error");
             }
         }
 
-
         async function loadProgress() {
             try {
-                const res = await fetch(`${API}/api/games/${GAME_ID}/progress`);
+                const res = await fetch(`${API}/api/games/${GAME_ID}/progress`, {
+                    headers: { Authorization: "Bearer " + token }
+                });
                 if (!res.ok) return;
                 const p = await res.json();
                 progressEl.textContent = `Progress: ${p.completed}/${p.total} items, ${p.percent}% complete`;
@@ -109,39 +165,45 @@
         async function addItem() {
             const description = inputEl.value.trim();
             if (!description) return;
+
             const res = await fetch(`${API}/api/games/${GAME_ID}/checklist`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer " + token
+                },
                 body: JSON.stringify({ description, completed: false })
             });
+
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
                 toast(data.message || "Failed to add item", "error");
                 return;
             }
+
             inputEl.value = "";
             await refreshAll();
         }
 
-        // Checkbox toggle
         itemsEl.addEventListener("change", async (e) => {
             if (!e.target.classList.contains("toggle")) return;
             const li = e.target.closest("li");
             const id = li.dataset.id;
             const completed = e.target.checked;
 
-            li.classList.toggle("done", completed); // toggle strike-through
+            li.classList.toggle("done", completed);
 
             await fetch(`${API}/api/checklist/${id}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer " + token
+                },
                 body: JSON.stringify({ completed })
             });
             loadProgress();
         });
 
-
-        // Button interactions (edit, save, cancel, delete)
         itemsEl.addEventListener("click", async (e) => {
             const li = e.target.closest("li");
             if (!li) return;
@@ -153,7 +215,6 @@
             const cancelBtn = li.querySelector(".cancel-btn");
 
             if (e.target.classList.contains("edit-btn")) {
-                // Switch to edit mode
                 descSpan.style.display = "none";
                 editInput.style.display = "inline-block";
                 editBtn.style.display = "none";
@@ -163,7 +224,6 @@
             }
 
             if (e.target.classList.contains("cancel-btn")) {
-                // Cancel edit
                 editInput.value = descSpan.textContent;
                 descSpan.style.display = "inline";
                 editInput.style.display = "none";
@@ -173,12 +233,14 @@
             }
 
             if (e.target.classList.contains("save-btn")) {
-                // Save update
                 const description = editInput.value.trim();
                 if (description && description !== descSpan.textContent) {
                     await fetch(`${API}/api/checklist/${id}`, {
                         method: "PUT",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: "Bearer " + token
+                        },
                         body: JSON.stringify({ description })
                     });
                     descSpan.textContent = description;
@@ -191,8 +253,10 @@
             }
 
             if (e.target.classList.contains("del")) {
-                // Delete item
-                await fetch(`${API}/api/checklist/${id}`, { method: "DELETE" });
+                await fetch(`${API}/api/checklist/${id}`, {
+                    method: "DELETE",
+                    headers: { Authorization: "Bearer " + token }
+                });
                 refreshAll();
             }
         });
@@ -202,14 +266,14 @@
             if (e.key === "Enter") addItem();
         });
 
-        const userId = Number(localStorage.getItem("ct_user_id") || 0);
-
         async function loadGameTitle() {
             const h1 = document.getElementById("gameTitle");
             const fallback = () => { h1.textContent = "Game Checklist"; };
 
             try {
-                const r1 = await fetch(`${API}/api/games/${GAME_ID}`);
+                const r1 = await fetch(`${API}/api/games/${GAME_ID}`, {
+                    headers: { Authorization: "Bearer " + token }
+                });
                 if (r1.ok) {
                     let g = await r1.json();
                     if (Array.isArray(g)) g = g[0] || {};
@@ -222,8 +286,11 @@
                         return;
                     }
                 }
+
                 if (userId) {
-                    const r2 = await fetch(`${API}/api/games?user_id=${userId}`);
+                    const r2 = await fetch(`${API}/api/games?user_id=${userId}`, {
+                        headers: { Authorization: "Bearer " + token }
+                    });
                     if (r2.ok) {
                         const list = await r2.json().catch(() => []);
                         const g = Array.isArray(list) ? list.find(x => Number(x.game_id) === GAME_ID) : null;
@@ -235,16 +302,26 @@
                         }
                     }
                 }
+
                 fallback();
             } catch {
                 fallback();
             }
         }
 
+        function handleUnauthorized() {
+            localStorage.removeItem("token");
+            try {
+                sessionStorage.setItem("redirectAfterLogin", location.pathname + location.search + location.hash);
+            } catch { }
+            location.replace("/login.html");
+        }
+
         // Initialize
         loadGameTitle();
         refreshAll();
     </script>
+
 </body>
 
 </html>
