@@ -3,10 +3,54 @@
 
 <head>
     <meta charset="utf-8">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="styles.css">
     <script src="toast.js" defer></script>
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <title>Dashboard – Completionist Tracker</title>
+
+    <!-- Prevent flash before auth check -->
+    <style>
+        html {
+            visibility: hidden
+        }
+    </style>
+
+    <!-- Auth guard: runs BEFORE anything else -->
+    <script>
+        (async () => {
+            const LOGIN_PATH = '/login.html';
+            const API = 'https://completionist-backend.onrender.com';
+            const token = localStorage.getItem('token');
+
+            const rememberDest = () => {
+                try {
+                    sessionStorage.setItem('redirectAfterLogin', location.pathname + location.search + location.hash);
+                } catch { }
+            };
+
+            const toLogin = () => {
+                rememberDest();
+                location.replace(LOGIN_PATH);
+            };
+
+            if (!token) {
+                toLogin();
+                return;
+            }
+
+            try {
+                const res = await fetch(API + '/api/auth/me', {
+                    headers: { Authorization: 'Bearer ' + token }
+                });
+                if (!res.ok) throw new Error('unauthorized');
+                window.currentUser = await res.json().catch(() => null);
+                document.documentElement.style.visibility = 'visible';
+            } catch {
+                localStorage.removeItem('token');
+                toLogin();
+            }
+        })();
+    </script>
 </head>
 
 <body>
@@ -26,21 +70,21 @@
 
             <form id="gameForm" class="wide-form">
                 <div class="form-row"
-                    style="flex-direction: row; flex-wrap: wrap; gap: 20px; align-items: flex-start; justify-content: space-between">
+                    style="flex-direction:row;flex-wrap:wrap;gap:20px;align-items:flex-start;justify-content:space-between">
                     <input id="title" class="input" placeholder="Game Title" required autocomplete="off"
-                        style="flex: 2; min-width: 240px">
-                    <select id="run_type" class="input" required style="flex: 1; min-width: 160px">
+                        style="flex:2;min-width:240px">
+                    <select id="run_type" class="input" required style="flex:1;min-width:160px">
                         <option value="">Run Type</option>
                     </select>
-                    <select id="platform" class="input" required style="flex: 1; min-width: 160px">
+                    <select id="platform" class="input" required style="flex:1;min-width:160px">
                         <option value="">Platform</option>
                     </select>
-                    <select id="genre" class="input" required style="flex: 1; min-width: 160px">
+                    <select id="genre" class="input" required style="flex:1;min-width:160px">
                         <option value="">Genre</option>
                     </select>
                     <input id="tags" class="input" placeholder="Tags (comma-separated)" autocomplete="off"
-                        style="flex: 2; min-width: 240px">
-                    <div style="display: flex; align-items: center; gap: 12px; flex-basis: 100%; margin-top: 10px">
+                        style="flex:2;min-width:240px">
+                    <div style="display:flex;align-items:center;gap:12px;flex-basis:100%;margin-top:10px">
                         <button class="button" type="submit">Add Game</button>
                         <span id="flash" class="flash"></span>
                     </div>
@@ -54,102 +98,63 @@
     </div>
 
     <script>
-        const API = "https://completionist-backend.onrender.com";
-        const userId = Number(localStorage.getItem("ct_user_id") || 0);
+        const API = 'https://completionist-backend.onrender.com';
+        const token = localStorage.getItem('token') || '';
+        const userId = Number(localStorage.getItem('ct_user_id') || 0);
 
         const platforms = [
-            "PC",
-            "PlayStation",
-            "PlayStation 2",
-            "PlayStation 3",
-            "PlayStation 4",
-            "PlayStation 5",
-            "Xbox",
-            "Xbox 360",
-            "Xbox One",
-            "Xbox Series X/S",
-            "Nintendo Switch",
-            "Wii",
-            "Wii U",
-            "GameCube",
-            "Nintendo 64",
-            "SNES",
-            "NES",
-            "Game Boy",
-            "Game Boy Advance",
-            "Nintendo DS",
-            "Nintendo 3DS",
-            "PSP",
-            "PS Vita",
-            "Mobile",
-            "Other"
+            'PC', 'PlayStation', 'PlayStation 2', 'PlayStation 3', 'PlayStation 4', 'PlayStation 5',
+            'Xbox', 'Xbox 360', 'Xbox One', 'Xbox Series X/S', 'Nintendo Switch', 'Wii', 'Wii U',
+            'GameCube', 'Nintendo 64', 'SNES', 'NES', 'Game Boy', 'Game Boy Advance', 'Nintendo DS',
+            'Nintendo 3DS', 'PSP', 'PS Vita', 'Mobile', 'Other'
         ];
 
         const genres = [
-            "RPG",
-            "JRPG",
-            "Action",
-            "Adventure",
-            "Action-Adventure",
-            "Platformer",
-            "Puzzle",
-            "Metroidvania",
-            "Shooter",
-            "First-Person Shooter",
-            "Third-Person Shooter",
-            "Fighting",
-            "Racing",
-            "Strategy",
-            "Real-Time Strategy",
-            "Turn-Based Strategy",
-            "Simulation",
-            "Sports",
-            "Stealth",
-            "Survival",
-            "Survival Horror",
-            "Visual Novel",
-            "Rhythm",
-            "Sandbox",
-            "Open World",
-            "MMORPG",
-            "Roguelike",
-            "Roguelite",
-            "Card Game",
-            "Other"
+            'RPG', 'JRPG', 'Action', 'Adventure', 'Action-Adventure', 'Platformer', 'Puzzle', 'Metroidvania',
+            'Shooter', 'First-Person Shooter', 'Third-Person Shooter', 'Fighting', 'Racing', 'Strategy',
+            'Real-Time Strategy', 'Turn-Based Strategy', 'Simulation', 'Sports', 'Stealth', 'Survival',
+            'Survival Horror', 'Visual Novel', 'Rhythm', 'Sandbox', 'Open World', 'MMORPG', 'Roguelike',
+            'Roguelite', 'Card Game', 'Other'
         ];
 
         const runTypes = [
-            "100% Completion",
-            "Any%",
-            "Minimalist",
-            "Low% Run",
-            "Challenge Run",
-            "No Damage",
-            "No Death",
-            "Permadeath / Ironman",
-            "Speedrun",
-            "Glitchless",
-            "Casual",
-            "New Game+",
-            "Custom"
+            '100% Completion', 'Any%', 'Minimalist', 'Low% Run', 'Challenge Run', 'No Damage', 'No Death',
+            'Permadeath / Ironman', 'Speedrun', 'Glitchless', 'Casual', 'New Game+', 'Custom'
         ];
 
         window.onload = () => {
+            // Logout
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    localStorage.removeItem('token');
+                    // Optional: clear app-specific IDs if your backend derives user from token
+                    // localStorage.removeItem('ct_user_id');
+                    try { sessionStorage.removeItem('redirectAfterLogin'); } catch { }
+                    location.replace('/login.html');
+                });
+            }
+
             initDropdowns();
             loadGames();
-            document.getElementById("gameForm").addEventListener("submit", handleSubmit);
+            document.getElementById('gameForm').addEventListener('submit', handleSubmit);
+
+            // Failsafe: if auth guard already showed the page, keep it; otherwise unhide.
+            if (document.documentElement.style.visibility !== 'visible') {
+                document.documentElement.style.visibility = 'visible';
+            }
         };
 
         function initDropdowns() {
-            fillDropdown("platform", platforms);
-            fillDropdown("genre", genres);
-            fillDropdown("run_type", runTypes);
+            fillDropdown('platform', platforms);
+            fillDropdown('genre', genres);
+            fillDropdown('run_type', runTypes);
         }
 
         function fillDropdown(id, options) {
             const select = document.getElementById(id);
             options.forEach(opt => {
-                const o = document.createElement("option");
+                const o = document.createElement('option');
                 o.value = opt;
                 o.textContent = opt;
                 select.appendChild(o);
@@ -157,195 +162,202 @@
         }
 
         async function loadGames() {
-            const res = await fetch(`${API}/api/games?user_id=${userId}`);
-            const data = await res.json();
+            try {
+                const res = await fetch(`${API}/api/games?user_id=${userId}`, {
+                    headers: { Authorization: 'Bearer ' + token }
+                });
 
-            const container = document.getElementById("gameList");
-            container.innerHTML = "";
+                if (res.status === 401) return handleUnauthorized();
 
-            if (!Array.isArray(data) || data.length === 0) {
-                container.innerHTML = `<p class="section" style="color:var(--muted)">No games found. Add one above.</p>`;
-                return;
-            }
+                const data = await res.json();
+                const container = document.getElementById('gameList');
+                container.innerHTML = '';
 
-            data.forEach(game => {
-                const div = document.createElement("div");
-                div.className = "card item";
+                if (!Array.isArray(data) || data.length === 0) {
+                    container.innerHTML = `<p class="section" style="color:var(--muted)">No games found. Add one above.</p>`;
+                    return;
+                }
 
-                const tagHTML = (game.tags || "")
-                    .split(",")
-                    .map(tag => `<span class="tag">#${tag.trim()}</span>`)
-                    .join(" ");
+                data.forEach(game => {
+                    const div = document.createElement('div');
+                    div.className = 'card item';
 
-                div.innerHTML = `
+                    const tagHTML = (game.tags || '')
+                        .split(',')
+                        .filter(Boolean)
+                        .map(tag => `<span class="tag">#${escapeHtml(tag.trim())}</span>`)
+                        .join(' ');
+
+                    div.innerHTML = `
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
             <div>
-                <div style="margin-bottom: 10px">
-                <div style="font-weight:700; margin-bottom: 4px">
-                    ${game.title}${game.run_type ? ` – ${game.run_type}` : ""}
+              <div style="margin-bottom:10px">
+                <div style="font-weight:700;margin-bottom:4px">
+                  ${escapeHtml(game.title)}${game.run_type ? ` – ${escapeHtml(game.run_type)}` : ''}
                 </div>
                 <div style="color:var(--muted);font-size:13px">
-                    ${game.platform || ""}${game.platform && game.genre ? " | " : ""}${game.genre || ""}
+                  ${escapeHtml(game.platform || '')}${game.platform && game.genre ? ' | ' : ''}${escapeHtml(game.genre || '')}
                 </div>
-                </div>
-
-                ${tagHTML ? `<div class="tags" style="margin-top:4px">${tagHTML}</div>` : ""}
+              </div>
+              ${tagHTML ? `<div class="tags" style="margin-top:4px">${tagHTML}</div>` : ''}
             </div>
             <div style="text-align:right">
-            <div class="progress-pill">${game.progress || 0}%</div>
-            <div class="progress-wrap">
-            <div class="progress-bar">
-                <div class="progress-fill" style="width:${game.progress || 0}%"></div>
-            </div>
-            </div>
-            <div style="margin-top:10px">
-                <div class="btn-group" style="display:flex; gap:6px">
-                <a href="checklist.html?game_id=${game.game_id}" class="button btn-checklist">Checklist</a>
-                <button type="button" class="button btn-ghost" onclick="editGame(${game.game_id})">Edit</button>
-                <button type="button" class="button btn-delete" onclick="deleteGame(${game.game_id})">Delete</button>
+              <div class="progress-pill">${Number(game.progress || 0)}%</div>
+              <div class="progress-wrap">
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width:${Number(game.progress || 0)}%"></div>
                 </div>
-            </div>
+              </div>
+              <div style="margin-top:10px">
+                <div class="btn-group" style="display:flex;gap:6px">
+                  <a href="checklist.html?game_id=${game.game_id}" class="button btn-checklist">Checklist</a>
+                  <button type="button" class="button btn-ghost" onclick="editGame(${game.game_id})">Edit</button>
+                  <button type="button" class="button btn-delete" onclick="deleteGame(${game.game_id})">Delete</button>
+                </div>
+              </div>
             </div>
           </div>
         `;
-                container.prepend(div);
-
-            });
+                    container.prepend(div);
+                });
+            } catch (e) {
+                console.error('Load games error:', e);
+                toast('Failed to load games.', 'error');
+            }
         }
 
         async function handleSubmit(e) {
             e.preventDefault();
 
-            const title = document.getElementById("title").value.trim();
-            const platform = document.getElementById("platform").value;
-            const genre = document.getElementById("genre").value;
-            const run_type = document.getElementById("run_type").value;
-            const tags = document.getElementById("tags").value.trim();
+            const title = document.getElementById('title').value.trim();
+            const platform = document.getElementById('platform').value;
+            const genre = document.getElementById('genre').value;
+            const run_type = document.getElementById('run_type').value;
+            const tags = document.getElementById('tags').value.trim();
 
-            // Validate
             if (!title || !platform || !genre || !run_type) {
-                toast("Please fill in all required fields.", "error");
+                toast('Please fill in all required fields.', 'error');
                 return;
             }
 
-            const payload = {
-                user_id: userId,
-                title,
-                platform,
-                genre,
-                run_type,
-                tags
-            };
-
-            console.log("Submitting:", payload); // Debug log
+            const payload = { user_id: userId, title, platform, genre, run_type, tags };
 
             try {
                 const res = await fetch(`${API}/api/games`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer ' + token
+                    },
                     body: JSON.stringify(payload)
                 });
+
+                if (res.status === 401) return handleUnauthorized();
 
                 const data = await res.json().catch(() => ({}));
 
                 if (res.ok && data.game_id) {
-                    toast("Game added!", "success");
-                    document.getElementById("gameForm").reset();
+                    toast('Game added!', 'success');
+                    document.getElementById('gameForm').reset();
                     loadGames();
                 } else {
-                    toast(data.message || "Failed to add game", "error");
+                    toast(data.message || 'Failed to add game', 'error');
                 }
             } catch (err) {
-                console.error("Add game error:", err);
-                toast("Network error.", "error");
+                console.error('Add game error:', err);
+                toast('Network error.', 'error');
             }
         }
 
-
         async function deleteGame(id) {
-            if (!confirm("Delete this game?")) return;
+            if (!confirm('Delete this game?')) return;
 
-            const res = await fetch(`${API}/api/games/${id}`, { method: "DELETE" });
-            if (res.ok) {
-                toast("Game deleted.", "info");
-                loadGames();
+            try {
+                const res = await fetch(`${API}/api/games/${id}`, {
+                    method: 'DELETE',
+                    headers: { Authorization: 'Bearer ' + token }
+                });
+
+                if (res.status === 401) return handleUnauthorized();
+
+                if (res.ok) {
+                    toast('Game deleted.', 'info');
+                    loadGames();
+                } else {
+                    toast('Delete failed.', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                toast('Network error.', 'error');
             }
         }
 
         let editingGameId = null;
 
         function editGame(id) {
-            if (editingGameId) return; // prevent multiple rows in edit mode
+            if (editingGameId) return;
             editingGameId = id;
 
-            // find the card DOM for this game
-            const cards = Array.from(document.querySelectorAll("#gameList .card.item"));
-            const idx = cards.findIndex(card =>
-                card.querySelector(`.btn-checklist[href$="game_id=${id}"]`)
-            );
+            const cards = Array.from(document.querySelectorAll('#gameList .card.item'));
+            const idx = cards.findIndex(card => card.querySelector(`.btn-checklist[href$="game_id=${id}"]`));
             if (idx === -1) return;
 
             const card = cards[idx];
 
-            // read current values from the card (fallbacks if empty)
             const titleText = card.querySelector("div[style*='font-weight:700']").textContent.trim();
-            // titleText may be "Title – Run Type"
-            const [titleOnly, runTypeAfter] = titleText.split(" – ");
-            const meta = card.querySelector("div[style*='color:var(--muted)']").textContent || "";
-            const [platformCur, genreCur] = meta.split("|").map(s => (s || "").trim());
-            const tagsCur = Array.from(card.querySelectorAll(".tag"))
-                .map(t => t.textContent.replace(/^#/, "").trim())
-                .join(", ");
+            const [titleOnly, runTypeAfter] = titleText.split(' – ');
+            const meta = card.querySelector("div[style*='color:var(--muted)']").textContent || '';
+            const [platformCur, genreCur] = meta.split('|').map(s => (s || '').trim());
+            const tagsCur = Array.from(card.querySelectorAll('.tag'))
+                .map(t => t.textContent.replace(/^#/, '').trim())
+                .join(', ');
 
-            const rtCur = runTypeAfter || "";
-
-            // build selects with current values selected
-            const platformSelect = buildSelect("edit_platform", platforms, platformCur);
-            const genreSelect = buildSelect("edit_genre", genres, genreCur);
-            const runTypeSelect = buildSelect("edit_run_type", runTypes, rtCur);
+            const platformSelect = buildSelect('edit_platform', platforms, platformCur);
+            const genreSelect = buildSelect('edit_genre', genres, genreCur);
+            const runTypeSelect = buildSelect('edit_run_type', runTypes, runTypeAfter || '');
 
             card.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <input id="edit_title" class="input" placeholder="Game Title" value="${escapeHtml(titleOnly || "")}" style="flex:2;min-width:240px">
-        ${runTypeSelect}
-        ${platformSelect}
-        ${genreSelect}
-        <input id="edit_tags" class="input" placeholder="Tags (comma-separated)" value="${escapeHtml(tagsCur)}" style="flex:2;min-width:240px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <input id="edit_title" class="input" placeholder="Game Title" value="${escapeHtml(titleOnly || '')}" style="flex:2;min-width:240px">
+          ${runTypeSelect}
+          ${platformSelect}
+          ${genreSelect}
+          <input id="edit_tags" class="input" placeholder="Tags (comma-separated)" value="${escapeHtml(tagsCur)}" style="flex:2;min-width:240px">
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="button" onclick="saveEdit(${id})">Save</button>
+          <button type="button" class="button btn-ghost" onclick="cancelEdit()">Cancel</button>
+        </div>
       </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
-        <button type="button" class="button" onclick="saveEdit(${id})">Save</button>
-        <button type="button" class="button btn-ghost" onclick="cancelEdit()">Cancel</button>
-      </div>
-    </div>
-  `;
+    `;
         }
 
         function buildSelect(id, options, current) {
             const opts = ['<option value="">Select</option>']
-                .concat(options.map(o => `<option value="${escapeHtml(o)}"${o === current ? " selected" : ""}>${escapeHtml(o)}</option>`))
-                .join("");
+                .concat(options.map(o => `<option value="${escapeHtml(o)}"${o === current ? ' selected' : ''}>${escapeHtml(o)}</option>`))
+                .join('');
             return `<select id="${id}" class="input" style="flex:1;min-width:160px">${opts}</select>`;
         }
 
         function escapeHtml(s) {
-            return String(s || "")
-                .replaceAll("&", "&amp;")
-                .replaceAll("<", "&lt;")
-                .replaceAll(">", "&gt;")
-                .replaceAll('"', "&quot;")
-                .replaceAll("'", "&#039;");
+            return String(s || '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
         }
 
         async function saveEdit(id) {
-            const title = document.getElementById("edit_title").value.trim();
-            const platform = document.getElementById("edit_platform").value.trim();
-            const genre = document.getElementById("edit_genre").value.trim();
-            const run_type = document.getElementById("edit_run_type").value.trim();
-            const tags = document.getElementById("edit_tags").value.trim();
+            const title = document.getElementById('edit_title').value.trim();
+            const platform = document.getElementById('edit_platform').value.trim();
+            const genre = document.getElementById('edit_genre').value.trim();
+            const run_type = document.getElementById('edit_run_type').value.trim();
+            const tags = document.getElementById('edit_tags').value.trim();
 
             if (!title) {
-                toast("Title is required.", "error");
+                toast('Title is required.', 'error');
                 return;
             }
 
@@ -359,31 +371,44 @@
 
             try {
                 const res = await fetch(`${API}/api/games/${id}`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer ' + token
+                    },
                     body: JSON.stringify(payload)
                 });
+
+                if (res.status === 401) return handleUnauthorized();
+
                 const data = await res.json().catch(() => ({}));
 
                 if (res.ok) {
-                    toast("Game updated.", "success");
+                    toast('Game updated.', 'success');
                     editingGameId = null;
                     loadGames();
                 } else {
-                    toast(data.message || "Update failed.", "error");
+                    toast(data.message || 'Update failed.', 'error');
                 }
             } catch (e) {
                 console.error(e);
-                toast("Network error.", "error");
+                toast('Network error.', 'error');
             }
         }
 
         function cancelEdit() {
             editingGameId = null;
-            loadGames(); // re-render original card
+            loadGames();
+        }
+
+        function handleUnauthorized() {
+            localStorage.removeItem('token');
+            try {
+                sessionStorage.setItem('redirectAfterLogin', location.pathname + location.search + location.hash);
+            } catch { }
+            location.replace('/login.html');
         }
     </script>
-
 </body>
 
 </html>
