@@ -511,7 +511,7 @@ a:hover {
     border-radius: 9999px;
     /* fully rounded */
     color: var(--text);
-    font-size: 14px;
+    font-size: 18px;
     /* capsule text slightly smaller than H1/subtitle */
     font-weight: 600;
     line-height: 1;
