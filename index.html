@@ -426,15 +426,6 @@
                 return `<select id="${id}" class="input" style="flex:1;min-width:160px">${opts}</select>`;
             }
 
-            function escapeHtml(s) {
-                return String(s || '')
-                    .replaceAll('&', '&amp;')
-                    .replaceAll('<', '&lt;')
-                    .replaceAll('>', '&gt;')
-                    .replaceAll('"', '&quot;')
-                    .replaceAll("'", '&#039;');
-            }
-
             async function saveEdit(id) {
                 const title = document.getElementById('edit_title').value.trim();
                 const platform = document.getElementById('edit_platform').value.trim();
@@ -522,6 +513,15 @@
                     toast("Network error.", "error");
                 }
             }
+        }
+
+        function escapeHtml(s) {
+            return String(s || '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
         }
     </script>
 </body>
