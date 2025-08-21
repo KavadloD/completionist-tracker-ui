@@ -491,35 +491,49 @@ a:hover {
     color: var(--muted);
 }
 
-/* Capsule style for checklist progress */
+/* Progress capsule */
 .progress-pill {
     display: inline-block;
     background: #222;
     border: 1px solid #2b2b2b;
     padding: 6px 14px;
-    border-radius: 999px;
+    /* 6/14 sits well at 14–16px text */
+    border-radius: 9999px;
+    /* fully rounded */
     color: var(--text);
-    font-size: 16px;
+    font-size: 14px;
+    /* capsule text slightly smaller than H1/subtitle */
     font-weight: 600;
+    line-height: 1;
+    /* tight so the pill stays compact */
 }
 
-/* Extra spacing inside the checklist top panel */
+/* Top panel spacing (4/8/12/16/20px rhythm) */
 .checklist-header h1 {
-    margin-top: 12px;
-    margin-bottom: 24px;
+    margin: 0 0 12px 0;
+    /* no top margin inside panel, 12px below */
     font-size: 32px;
+    /* your chosen size is fine */
 }
 
 .checklist-header p {
-    margin-bottom: 48x;
+    margin: 0 0 16px 0;
+    /* fixed: was 48x; give clear but not huge gap */
     font-size: 14px;
 }
 
 .checklist-header .progress-pill {
-    margin-top: 26px;
-    margin-bottom: 40px;
+    margin: 0 0 20px 0;
+    /* pill separated from input by 20px */
 }
 
 .checklist-header .add-row {
-    margin-bottom: 12px;
+    margin: 0 0 12px 0;
+    /* breathing room before the panel edge */
+}
+
+/* Optional: keep the add input from stretching too wide */
+.checklist-header .add-row .input {
+    max-width: 400px;
+    width: 100%;
 }
