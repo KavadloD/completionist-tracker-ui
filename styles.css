@@ -499,23 +499,27 @@ a:hover {
     padding: 6px 14px;
     border-radius: 999px;
     color: var(--text);
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
 }
 
 /* Extra spacing inside the checklist top panel */
 .checklist-header h1 {
-    margin-bottom: 10px;
+    margin-top: 12px;
+    margin-bottom: 24px;
+    font-size: 32px;
 }
 
 .checklist-header p {
-    margin-bottom: 18px;
+    margin-bottom: 48x;
+    font-size: 14px;
 }
 
 .checklist-header .progress-pill {
-    margin-bottom: 20px;
+    margin-top: 26px;
+    margin-bottom: 40px;
 }
 
 .checklist-header .add-row {
-    margin-top: 6px;
+    margin-bottom: 12px;
 }
