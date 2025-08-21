@@ -490,3 +490,32 @@ a:hover {
     text-decoration: line-through;
     color: var(--muted);
 }
+
+/* Capsule style for checklist progress */
+.progress-pill {
+    display: inline-block;
+    background: #222;
+    border: 1px solid #2b2b2b;
+    padding: 6px 14px;
+    border-radius: 999px;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Extra spacing inside the checklist top panel */
+.checklist-header h1 {
+    margin-bottom: 10px;
+}
+
+.checklist-header p {
+    margin-bottom: 18px;
+}
+
+.checklist-header .progress-pill {
+    margin-bottom: 20px;
+}
+
+.checklist-header .add-row {
+    margin-top: 6px;
+}
