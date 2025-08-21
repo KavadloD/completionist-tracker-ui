@@ -558,7 +558,10 @@ a:hover {
 
 #shareDialog::backdrop {
     background: rgba(0, 0, 0, 0.6);
-    /* dimmed black */
     backdrop-filter: blur(2px);
-    /* optional soft blur */
+}
+
+#shareBtn {
+    padding-top: 12px;
+    padding-bottom: 12px;
 }
