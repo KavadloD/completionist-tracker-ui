@@ -66,25 +66,23 @@
             </nav>
         </div>
 
-        <div class="panel wide-panel">
-            <h1 id="gameTitle">Game Checklist</h1>
-            <p class="section" style="color: var(--muted)">
-                Track your progress for individual game goals.
-            </p>
-
-            <div class="section">
-                <span id="progressText" class="progress">Progress: ...</span>
+        <div id="headerRow" style="display:flex; gap:16px; align-items:flex-start; justify-content:space-between;">
+            <div id="headerLeft" style="flex:1 1 auto; min-width:260px;">
+                <h1 id="gameTitle">Game Checklist</h1>
+                <p class="section" style="color: var(--muted)">Track your progress for individual game goals.</p>
             </div>
 
-            <div class="form-row">
-                <input id="descriptionInput" class="input" placeholder="New checklist item" autocomplete="off" />
-                <button id="addBtn" class="button">Add</button>
+            <div id="headerRight" style="flex:0 0 auto;">
+                <img id="gameThumb" alt=""
+                    style="width:160px;height:160px;object-fit:cover;border-radius:12px;background:#111;border:1px solid #222;display:none">
             </div>
         </div>
 
-        <div class="panel wide-panel">
-            <ul id="items" class="list"></ul>
-        </div>
+    </div>
+
+    <div class="panel wide-panel">
+        <ul id="items" class="list"></ul>
+    </div>
     </div>
 
     <script>
@@ -266,48 +264,62 @@
             if (e.key === "Enter") addItem();
         });
 
-        async function loadGameTitle() {
+        async function loadGameHeader() {
             const h1 = document.getElementById("gameTitle");
-            const fallback = () => { h1.textContent = "Game Checklist"; };
+            const img = document.getElementById("gameThumb");
+
+            const fallbackThumb =
+                "data:image/svg+xml;utf8," +
+                encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160">
+  <rect width="100%" height="100%" fill="#1f2937"/>
+  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+        fill="#9ca3af" font-family="Segoe UI, Arial" font-size="14">No Image</text>
+</svg>`);
+
+            const setUI = (g) => {
+                const title = (g.title || "").trim();
+                const run = (g.run_type || "").trim();
+                const label = run ? `${title} - ${run}` : (title || "Game Checklist");
+                h1.textContent = label;
+                document.title = `${label} - Checklist`;
+
+                const src = g.thumbnail_url || g.cover_url || "";
+                if (src) {
+                    img.src = src;
+                    img.alt = (g.title || "cover") + " thumbnail";
+                    img.style.display = "block";
+                    img.onerror = () => { img.onerror = null; img.src = fallbackThumb; img.style.display = "block"; };
+                } else {
+                    img.src = fallbackThumb;
+                    img.style.display = "block";
+                }
+            };
 
             try {
-                const r1 = await fetch(`${API}/api/games/${GAME_ID}`, {
-                    headers: { Authorization: "Bearer " + token }
-                });
+                // primary: direct game fetch
+                const r1 = await fetch(`${API}/api/games/${GAME_ID}`, { headers: { Authorization: "Bearer " + token } });
                 if (r1.ok) {
-                    let g = await r1.json();
-                    if (Array.isArray(g)) g = g[0] || {};
-                    const title = (g.title || "").trim();
-                    const run = (g.run_type || "").trim();
-                    if (title) {
-                        const label = run ? `${title} \u2013 ${run}` : title;
-                        h1.textContent = label;
-                        document.title = `${label} – Checklist`;
-                        return;
-                    }
+                    const g = await r1.json();
+                    setUI(g);
+                    return;
                 }
 
+                // fallback: list and find by id
                 if (userId) {
-                    const r2 = await fetch(`${API}/api/games?user_id=${userId}`, {
-                        headers: { Authorization: "Bearer " + token }
-                    });
+                    const r2 = await fetch(`${API}/api/games?user_id=${userId}`, { headers: { Authorization: "Bearer " + token } });
                     if (r2.ok) {
                         const list = await r2.json().catch(() => []);
-                        const g = Array.isArray(list) ? list.find(x => Number(x.game_id) === GAME_ID) : null;
-                        if (g && g.title) {
-                            const label = g.run_type ? `${g.title} \u2013 ${g.run_type}` : g.title;
-                            h1.textContent = label;
-                            document.title = `${label} – Checklist`;
-                            return;
-                        }
+                        const g = Array.isArray(list) ? list.find(x => Number(x.game_id) === Number(GAME_ID)) : null;
+                        if (g) { setUI(g); return; }
                     }
                 }
 
-                fallback();
+                setUI({});
             } catch {
-                fallback();
+                setUI({});
             }
         }
+
 
         function handleUnauthorized() {
             localStorage.removeItem("token");
@@ -318,7 +330,7 @@
         }
 
         // Initialize
-        loadGameTitle();
+        loadGameHeader();
         refreshAll();
     </script>
 
