@@ -25,6 +25,8 @@
         (async () => {
             const LOGIN_PATH = '/login.html';
             const API = 'https://completionist-backend.onrender.com';
+            const devAllowLegacy = true; // set to false (or remove) for final if you require JWT
+
             const token = localStorage.getItem('token');
             const legacyUserId = localStorage.getItem('ct_user_id');
 
@@ -32,6 +34,12 @@
                 try { sessionStorage.setItem('redirectAfterLogin', location.pathname + location.search + location.hash); } catch { }
             };
             const toLogin = () => { rememberDest(); location.replace(LOGIN_PATH); };
+
+            // Helper so other scripts can avoid sending an empty Authorization header
+            window.authHeaders = function () {
+                const t = localStorage.getItem('token');
+                return t ? { Authorization: 'Bearer ' + t } : {};
+            };
 
             // Preferred: token + server verify
             if (token) {
@@ -42,14 +50,14 @@
                     document.documentElement.style.visibility = 'visible';
                     return;
                 } catch {
-                    localStorage.removeItem('token');
-                    // fall through to legacy branch
+                    localStorage.removeItem('token'); // fall through to legacy or login
                 }
             }
 
             // Temporary legacy mode: allow if we only have ct_user_id (no token)
-            if (legacyUserId) {
-                console.warn('Running in legacy mode (no token). Add JWT to backend when possible.');
+            if (legacyUserId && devAllowLegacy) {
+                // console.warn('Running in legacy mode (no token).'); // enable during development if desired
+                window.isLegacySession = true;
                 document.documentElement.style.visibility = 'visible';
                 return;
             }
@@ -58,7 +66,6 @@
             toLogin();
         })();
     </script>
-
 </head>
 
 <body>
