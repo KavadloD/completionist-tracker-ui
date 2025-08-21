@@ -555,3 +555,10 @@ a:hover {
         align-self: center;
     }
 }
+
+#shareDialog::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+    /* dimmed black */
+    backdrop-filter: blur(2px);
+    /* optional soft blur */
+}
