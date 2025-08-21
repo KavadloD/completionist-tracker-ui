@@ -82,6 +82,10 @@
                         <input id="descriptionInput" class="input" placeholder="New checklist item">
                         <button id="addBtn" class="button">Add</button>
                     </div>
+                    <!-- Share to Community -->
+                    <div style="margin-top:12px">
+                        <button id="shareBtn" class="button btn-ghost">Share to Community</button>
+                    </div>
                 </div>
 
                 <!-- Right: square thumbnail -->
@@ -99,27 +103,34 @@
     </div>
 
     <script>
+        // Config
         const API = "https://completionist-backend.onrender.com";
         const token = localStorage.getItem("token") || "";
         const userId = Number(localStorage.getItem("ct_user_id") || 0);
         const params = new URLSearchParams(window.location.search);
         const GAME_ID = Number(params.get("game_id") || 0);
 
-        if (!GAME_ID) {
-            toast("Missing game ID, returning to dashboard", "error");
-            window.location.href = "index.html";
+        // Helpers
+        function authHeaders() {
+            const t = localStorage.getItem("token") || "";
+            return t ? { Authorization: "Bearer " + t } : {};
         }
 
-        const itemsEl = document.getElementById("items");
-        const inputEl = document.getElementById("descriptionInput");
-        const addBtn = document.getElementById("addBtn");
-        const progressEl = document.getElementById("progressText");
+        function handleUnauthorized() {
+            localStorage.removeItem("token");
+            try {
+                sessionStorage.setItem("redirectAfterLogin", location.pathname + location.search + location.hash);
+            } catch { }
+            location.replace("/login.html");
+        }
 
+        // UI pieces we’ll bind after DOM is ready
+        let itemsEl, inputEl, addBtn, progressEl;
+
+        // Data loads
         async function loadChecklist() {
             try {
-                const res = await fetch(`${API}/api/games/${GAME_ID}/checklist`, {
-                    headers: { Authorization: "Bearer " + token }
-                });
+                const res = await fetch(`${API}/api/games/${GAME_ID}/checklist`, { headers: authHeaders() });
                 if (res.status === 401) return handleUnauthorized();
 
                 const list = await res.json().catch(() => []);
@@ -137,29 +148,36 @@
                     li.dataset.id = id;
 
                     li.innerHTML = `
-        <label class="check-row">
-          <input type="checkbox" class="toggle" ${item.completed ? "checked" : ""}>
-          <span class="desc">${item.description}</span>
-          <input type="text" class="edit input" value="${item.description}" style="display:none;">
-        </label>
-        <div style="display:flex; justify-content: flex-end; gap:0.5rem;">
-          <button class="button btn-edit edit-btn">Edit</button>
-          <button class="button btn-save save-btn" style="display:none;">Save</button>
-          <button class="button btn-cancel cancel-btn" style="display:none;">Cancel</button>
-          <button class="button btn-delete del">Delete</button>
-        </div>`;
+          <label class="check-row">
+            <input type="checkbox" class="toggle" ${item.completed ? "checked" : ""}>
+            <span class="desc"></span>
+            <input type="text" class="edit input" style="display:none;">
+          </label>
+          <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+            <button class="button btn-edit edit-btn">Edit</button>
+            <button class="button btn-save save-btn" style="display:none;">Save</button>
+            <button class="button btn-cancel cancel-btn" style="display:none;">Cancel</button>
+            <button class="button btn-delete del">Delete</button>
+          </div>`;
+
+                    // Safe text assignment
+                    const descSpan = li.querySelector(".desc");
+                    const editInput = li.querySelector(".edit");
+                    descSpan.textContent = item.description || "";
+                    editInput.value = item.description || "";
+
                     itemsEl.appendChild(li);
                 }
             } catch (e) {
+                console.error(e);
                 toast("Error loading checklist", "error");
             }
         }
 
         async function loadProgress() {
             try {
-                const res = await fetch(`${API}/api/games/${GAME_ID}/progress`, {
-                    headers: { Authorization: "Bearer " + token }
-                });
+                const res = await fetch(`${API}/api/games/${GAME_ID}/progress`, { headers: authHeaders() });
+                if (res.status === 401) return handleUnauthorized();
                 if (!res.ok) return;
                 const p = await res.json();
                 progressEl.textContent = `Progress: ${p.completed}/${p.total} items, ${p.percent}% complete`;
@@ -179,10 +197,7 @@
 
             const res = await fetch(`${API}/api/games/${GAME_ID}/checklist`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: "Bearer " + token
-                },
+                headers: Object.assign({ "Content-Type": "application/json" }, authHeaders()),
                 body: JSON.stringify({ description, completed: false })
             });
 
@@ -196,87 +211,7 @@
             await refreshAll();
         }
 
-        itemsEl.addEventListener("change", async (e) => {
-            if (!e.target.classList.contains("toggle")) return;
-            const li = e.target.closest("li");
-            const id = li.dataset.id;
-            const completed = e.target.checked;
-
-            li.classList.toggle("done", completed);
-
-            await fetch(`${API}/api/checklist/${id}`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: "Bearer " + token
-                },
-                body: JSON.stringify({ completed })
-            });
-            loadProgress();
-        });
-
-        itemsEl.addEventListener("click", async (e) => {
-            const li = e.target.closest("li");
-            if (!li) return;
-            const id = li.dataset.id;
-            const descSpan = li.querySelector(".desc");
-            const editInput = li.querySelector(".edit");
-            const editBtn = li.querySelector(".edit-btn");
-            const saveBtn = li.querySelector(".save-btn");
-            const cancelBtn = li.querySelector(".cancel-btn");
-
-            if (e.target.classList.contains("edit-btn")) {
-                descSpan.style.display = "none";
-                editInput.style.display = "inline-block";
-                editBtn.style.display = "none";
-                saveBtn.style.display = "inline-block";
-                cancelBtn.style.display = "inline-block";
-                editInput.focus();
-            }
-
-            if (e.target.classList.contains("cancel-btn")) {
-                editInput.value = descSpan.textContent;
-                descSpan.style.display = "inline";
-                editInput.style.display = "none";
-                editBtn.style.display = "inline-block";
-                saveBtn.style.display = "none";
-                cancelBtn.style.display = "none";
-            }
-
-            if (e.target.classList.contains("save-btn")) {
-                const description = editInput.value.trim();
-                if (description && description !== descSpan.textContent) {
-                    await fetch(`${API}/api/checklist/${id}`, {
-                        method: "PUT",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: "Bearer " + token
-                        },
-                        body: JSON.stringify({ description })
-                    });
-                    descSpan.textContent = description;
-                }
-                descSpan.style.display = "inline";
-                editInput.style.display = "none";
-                editBtn.style.display = "inline-block";
-                saveBtn.style.display = "none";
-                cancelBtn.style.display = "none";
-            }
-
-            if (e.target.classList.contains("del")) {
-                await fetch(`${API}/api/checklist/${id}`, {
-                    method: "DELETE",
-                    headers: { Authorization: "Bearer " + token }
-                });
-                refreshAll();
-            }
-        });
-
-        addBtn.addEventListener("click", addItem);
-        inputEl.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") addItem();
-        });
-
+        // Header (title/thumbnail)
         async function loadGameHeader() {
             const h1 = document.getElementById("gameTitle");
             const img = document.getElementById("gameThumb");
@@ -309,43 +244,252 @@
             };
 
             try {
-                // primary: direct game fetch
-                const r1 = await fetch(`${API}/api/games/${GAME_ID}`, { headers: { Authorization: "Bearer " + token } });
+                // Primary: direct fetch
+                const r1 = await fetch(`${API}/api/games/${GAME_ID}`, { headers: authHeaders() });
+                if (r1.status === 401) return handleUnauthorized();
                 if (r1.ok) {
                     const g = await r1.json();
+                    window.currentGame = g;
                     setUI(g);
                     return;
                 }
 
-                // fallback: list and find by id
+                // Fallback: fetch list and find
                 if (userId) {
-                    const r2 = await fetch(`${API}/api/games?user_id=${userId}`, { headers: { Authorization: "Bearer " + token } });
+                    const r2 = await fetch(`${API}/api/games?user_id=${userId}`, { headers: authHeaders() });
+                    if (r2.status === 401) return handleUnauthorized();
                     if (r2.ok) {
                         const list = await r2.json().catch(() => []);
                         const g = Array.isArray(list) ? list.find(x => Number(x.game_id) === Number(GAME_ID)) : null;
-                        if (g) { setUI(g); return; }
+                        if (g) { window.currentGame = g; setUI(g); return; }
                     }
                 }
 
                 setUI({});
-            } catch {
+            } catch (e) {
+                console.error(e);
                 setUI({});
             }
         }
 
-
-        function handleUnauthorized() {
-            localStorage.removeItem("token");
+        // Share dialog
+        async function openShareDialog() {
+            const shareDialog = document.getElementById("shareDialog");
             try {
-                sessionStorage.setItem("redirectAfterLogin", location.pathname + location.search + location.hash);
-            } catch { }
-            location.replace("/login.html");
+                if (!window.currentGame) {
+                    const r = await fetch(`${API}/api/games/${GAME_ID}`, { headers: authHeaders() });
+                    if (r.status === 401) return handleUnauthorized();
+                    if (r.ok) window.currentGame = await r.json();
+                }
+
+                const rItems = await fetch(`${API}/api/games/${GAME_ID}/checklist`, { headers: authHeaders() });
+                if (rItems.status === 401) return handleUnauthorized();
+                const items = (rItems.ok ? await rItems.json() : []).filter(Boolean);
+
+                const g = window.currentGame || {};
+                document.getElementById("c_title").value = (g.title || "").trim();
+                document.getElementById("c_run_type").value = (g.run_type || "").trim();
+                document.getElementById("c_platform").value = (g.platform || "").trim();
+                document.getElementById("c_genre").value = (g.genre || "").trim();
+                document.getElementById("c_tags").value = (g.tags || "").trim();
+                document.getElementById("c_thumb").value = (g.thumbnail_url || g.cover_url || "").trim();
+                document.getElementById("c_desc").value = "";
+
+                const lines = items.map((it) => (it.description || "").trim()).filter(Boolean);
+                document.getElementById("c_items").value = lines.join("\n");
+
+                shareDialog.showModal();
+            } catch (e) {
+                console.error(e);
+                toast("Could not open share dialog", "error");
+            }
         }
 
-        // Initialize
-        loadGameHeader();
-        refreshAll();
+        async function publishToCommunity(e) {
+            e.preventDefault();
+            if (!userId) { toast("Please log in to publish.", "info"); return; }
+
+            const title = document.getElementById("c_title").value.trim();
+            const run_type = document.getElementById("c_run_type").value.trim();
+            const platform = document.getElementById("c_platform").value.trim();
+            const genre = document.getElementById("c_genre").value.trim();
+            const tags = document.getElementById("c_tags").value.trim();
+            const thumbnail_url = document.getElementById("c_thumb").value.trim();
+            const description = document.getElementById("c_desc").value.trim();
+            const itemsRaw = document.getElementById("c_items").value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+            const items = itemsRaw.map((d, i) => ({ description: d, order: i + 1 }));
+
+            if (!title) { toast("Title is required.", "error"); return; }
+            if (items.length === 0) { toast("Add at least one checklist item.", "error"); return; }
+            if (description.length > 600) { toast("Please keep the description under 600 characters.", "error"); return; }
+
+            const payload = {
+                created_by_user_id: userId,
+                title, description, platform, genre, run_type, tags, thumbnail_url, items
+            };
+
+            try {
+                const res = await fetch(`${API}/api/community`, {
+                    method: "POST",
+                    headers: Object.assign({ "Content-Type": "application/json" }, authHeaders()),
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.status === 401) return handleUnauthorized();
+
+                if (res.ok) {
+                    toast("Published to Community", "success");
+                    document.getElementById("shareDialog").close();
+                } else {
+                    toast(data.message || "Publish failed", "error");
+                }
+            } catch (err) {
+                console.error(err);
+                toast("Network error", "error");
+            }
+        }
+
+        // Events and init after DOM is ready
+        document.addEventListener("DOMContentLoaded", () => {
+            if (!GAME_ID) {
+                toast("Missing game ID, returning to dashboard", "error");
+                return (window.location.href = "index.html");
+            }
+
+            itemsEl = document.getElementById("items");
+            inputEl = document.getElementById("descriptionInput");
+            addBtn = document.getElementById("addBtn");
+            progressEl = document.getElementById("progressText");
+
+            // Add / Enter handlers
+            addBtn.addEventListener("click", addItem);
+            inputEl.addEventListener("keydown", (e) => { if (e.key === "Enter") addItem(); });
+
+            // Toggle / Edit / Delete handlers
+            itemsEl.addEventListener("change", async (e) => {
+                if (!e.target.classList.contains("toggle")) return;
+                const li = e.target.closest("li");
+                const id = li.dataset.id;
+                const completed = e.target.checked;
+
+                li.classList.toggle("done", completed);
+
+                const res = await fetch(`${API}/api/checklist/${id}`, {
+                    method: "PUT",
+                    headers: Object.assign({ "Content-Type": "application/json" }, authHeaders()),
+                    body: JSON.stringify({ completed })
+                });
+                if (res.status === 401) return handleUnauthorized();
+                loadProgress();
+            });
+
+            itemsEl.addEventListener("click", async (e) => {
+                const li = e.target.closest("li");
+                if (!li) return;
+                const id = li.dataset.id;
+                const descSpan = li.querySelector(".desc");
+                const editInput = li.querySelector(".edit");
+                const editBtn = li.querySelector(".edit-btn");
+                const saveBtn = li.querySelector(".save-btn");
+                const cancelBtn = li.querySelector(".cancel-btn");
+
+                if (e.target.classList.contains("edit-btn")) {
+                    descSpan.style.display = "none";
+                    editInput.style.display = "inline-block";
+                    editBtn.style.display = "none";
+                    saveBtn.style.display = "inline-block";
+                    cancelBtn.style.display = "inline-block";
+                    editInput.focus();
+                }
+
+                if (e.target.classList.contains("cancel-btn")) {
+                    editInput.value = descSpan.textContent;
+                    descSpan.style.display = "inline";
+                    editInput.style.display = "none";
+                    editBtn.style.display = "inline-block";
+                    saveBtn.style.display = "none";
+                    cancelBtn.style.display = "none";
+                }
+
+                if (e.target.classList.contains("save-btn")) {
+                    const description = editInput.value.trim();
+                    if (description && description !== descSpan.textContent) {
+                        const res = await fetch(`${API}/api/checklist/${id}`, {
+                            method: "PUT",
+                            headers: Object.assign({ "Content-Type": "application/json" }, authHeaders()),
+                            body: JSON.stringify({ description })
+                        });
+                        if (res.status === 401) return handleUnauthorized();
+                        descSpan.textContent = description;
+                    }
+                    descSpan.style.display = "inline";
+                    editInput.style.display = "none";
+                    editBtn.style.display = "inline-block";
+                    saveBtn.style.display = "none";
+                    cancelBtn.style.display = "none";
+                }
+
+                if (e.target.classList.contains("del")) {
+                    const res = await fetch(`${API}/api/checklist/${id}`, {
+                        method: "DELETE",
+                        headers: authHeaders()
+                    });
+                    if (res.status === 401) return handleUnauthorized();
+                    refreshAll();
+                }
+            });
+
+            // Logout
+            const logoutBtn = document.getElementById("logoutBtn");
+            if (logoutBtn) {
+                logoutBtn.addEventListener("click", () => {
+                    localStorage.removeItem("token");
+                    try { sessionStorage.removeItem("redirectAfterLogin"); } catch { }
+                    location.replace("/login.html");
+                });
+            }
+
+            // Share dialog wiring
+            const shareBtn = document.getElementById("shareBtn");
+            const shareForm = document.getElementById("shareForm");
+            const cancelShareBtn = document.getElementById("cancelShare");
+            if (shareBtn) shareBtn.addEventListener("click", openShareDialog);
+            if (cancelShareBtn) cancelShareBtn.addEventListener("click", () => document.getElementById("shareDialog").close());
+            if (shareForm) shareForm.addEventListener("submit", publishToCommunity);
+
+            // Initial loads
+            loadGameHeader();
+            refreshAll();
+        });
     </script>
+
+
+    <dialog id="shareDialog"
+        style="border:none;border-radius:12px;padding:0;max-width:640px;width:92%;background:#121212;color:var(--text);">
+        <form method="dialog" id="shareForm" style="padding:16px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-weight:700;font-size:18px;margin-bottom:4px">Publish to Community</div>
+            <div class="section" style="color:var(--muted);margin-top:-4px">Review details and items, then publish</div>
+
+            <input id="c_title" class="input" placeholder="Template Title" required>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <input id="c_run_type" class="input" placeholder="Run Type" style="flex:1;min-width:140px">
+                <input id="c_platform" class="input" placeholder="Platform" style="flex:1;min-width:140px">
+                <input id="c_genre" class="input" placeholder="Genre" style="flex:1;min-width:140px">
+            </div>
+            <input id="c_tags" class="input" placeholder="Tags (comma-separated)">
+            <input id="c_thumb" class="input" placeholder="Thumbnail URL (optional)">
+            <textarea id="c_desc" class="input" placeholder="Add a short description (optional, shown publicly)"
+                style="min-height:70px"></textarea>
+
+            <label style="font-size:14px;color:var(--muted)">Checklist items (one per line)</label>
+            <textarea id="c_items" class="input" style="min-height:140px"></textarea>
+
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+                <button type="button" class="button btn-ghost" id="cancelShare">Cancel</button>
+                <button type="submit" class="button" id="publishShare">Publish</button>
+            </div>
+        </form>
+    </dialog>
 
 </body>
 
