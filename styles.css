@@ -547,3 +547,12 @@ a:hover {
     max-width: 400px;
     width: 100%;
 }
+
+/* Top panel layout */
+.checklist-top {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    /* centers vertically */
+    justify-content: space-between;
+}
