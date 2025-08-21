@@ -96,6 +96,10 @@
                         <button class="button" type="submit">Add Game</button>
                         <span id="flash" class="flash"></span>
                     </div>
+                    <input id="thumbnail_url" class="input" placeholder="Thumbnail URL (optional)" autocomplete="off"
+                        style="flex:2;min-width:240px">
+                    <img id="thumbPreview" alt=""
+                        style="width:64px;height:64px;object-fit:cover;border-radius:6px;background:#111;border:1px solid #222;display:none">
                 </div>
             </form>
         </div>
@@ -169,47 +173,74 @@
             });
         }
 
+        const thumbInput = document.getElementById('thumbnail_url');
+        const thumbPreview = document.getElementById('thumbPreview');
+        thumbInput.addEventListener('input', () => {
+            const url = thumbInput.value.trim();
+            if (!url) { thumbPreview.style.display = 'none'; return; }
+            thumbPreview.src = url;
+            thumbPreview.style.display = 'inline-block';
+            thumbPreview.onerror = () => { thumbPreview.onerror = null; thumbPreview.style.display = 'none'; };
+        });
+
         async function loadGames() {
             try {
                 const res = await fetch(`${API}/api/games?user_id=${userId}`, {
-                    headers: { Authorization: 'Bearer ' + token }
+                    headers: { Authorization: "Bearer " + token }
                 });
-
                 if (res.status === 401) return handleUnauthorized();
 
                 const data = await res.json();
-                const container = document.getElementById('gameList');
-                container.innerHTML = '';
+                const container = document.getElementById("gameList");
+                container.innerHTML = "";
 
                 if (!Array.isArray(data) || data.length === 0) {
                     container.innerHTML = `<p class="section" style="color:var(--muted)">No games found. Add one above.</p>`;
                     return;
                 }
 
-                data.forEach(game => {
-                    const div = document.createElement('div');
-                    div.className = 'card item';
+                const fallbackThumb =
+                    "data:image/svg+xml;utf8," +
+                    encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90">
+  <rect width="100%" height="100%" fill="#1f2937"/>
+  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9ca3af" font-family="Segoe UI, Arial" font-size="14">No Image</text>
+</svg>`);
 
-                    const tagHTML = (game.tags || '')
-                        .split(',')
+                data.forEach((game) => {
+                    const div = document.createElement("div");
+                    div.className = "card item";
+
+                    const tagHTML = (game.tags || "")
+                        .split(",")
                         .filter(Boolean)
-                        .map(tag => `<span class="tag">#${escapeHtml(tag.trim())}</span>`)
-                        .join(' ');
+                        .map((tag) => `<span class="tag">#${escapeHtml(tag.trim())}</span>`)
+                        .join(" ");
+
+                    const imgSrc = escapeHtml(game.thumbnail_url || game.cover_url || fallbackThumb);
 
                     div.innerHTML = `
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div style="display:flex;align-items:stretch;gap:12px;flex-wrap:wrap">
+          <img
+            src="${imgSrc}"
+            alt="${escapeHtml(game.title || "cover")}"
+            style="width:96px;height:96px;object-fit:cover;border-radius:8px;background:#111;border:1px solid #222;flex:0 0 auto"
+            onerror="this.onerror=null;this.src='${fallbackThumb}'"
+          />
+
+          <div style="display:flex;align-items:center;justify-content:space-between;flex:1;gap:10px;flex-wrap:wrap">
             <div>
               <div style="margin-bottom:10px">
                 <div style="font-weight:700;margin-bottom:4px">
-                  ${escapeHtml(game.title)}${game.run_type ? ` – ${escapeHtml(game.run_type)}` : ''}
+                  ${escapeHtml(game.title)}${game.run_type ? ` – ${escapeHtml(game.run_type)}` : ""}
                 </div>
                 <div style="color:var(--muted);font-size:13px">
-                  ${escapeHtml(game.platform || '')}${game.platform && game.genre ? ' | ' : ''}${escapeHtml(game.genre || '')}
+                  ${escapeHtml(game.platform || "")}${game.platform && game.genre ? " | " : ""}${escapeHtml(game.genre || "")}
                 </div>
               </div>
-              ${tagHTML ? `<div class="tags" style="margin-top:4px">${tagHTML}</div>` : ''}
+              ${tagHTML ? `<div class="tags" style="margin-top:4px">${tagHTML}</div>` : ""}
             </div>
-            <div style="text-align:right">
+
+            <div style="text-align:right;min-width:220px">
               <div class="progress-pill">${Number(game.progress || 0)}%</div>
               <div class="progress-wrap">
                 <div class="progress-bar">
@@ -217,20 +248,22 @@
                 </div>
               </div>
               <div style="margin-top:10px">
-                <div class="btn-group" style="display:flex;gap:6px">
+                <div class="btn-group" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
                   <a href="checklist.html?game_id=${game.game_id}" class="button btn-checklist">Checklist</a>
                   <button type="button" class="button btn-ghost" onclick="editGame(${game.game_id})">Edit</button>
+                  <button type="button" class="button btn-ghost" onclick="setThumbnail(${game.game_id})">Set thumbnail</button>
                   <button type="button" class="button btn-delete" onclick="deleteGame(${game.game_id})">Delete</button>
                 </div>
               </div>
             </div>
           </div>
-        `;
+        </div>`;
+
                     container.prepend(div);
                 });
             } catch (e) {
-                console.error('Load games error:', e);
-                toast('Failed to load games.', 'error');
+                console.error("Load games error:", e);
+                toast("Failed to load games.", "error");
             }
         }
 
@@ -242,6 +275,7 @@
             const genre = document.getElementById('genre').value;
             const run_type = document.getElementById('run_type').value;
             const tags = document.getElementById('tags').value.trim();
+            const thumbnail_url_raw = document.getElementById('thumbnail_url').value.trim();
 
             if (!title || !platform || !genre || !run_type) {
                 toast('Please fill in all required fields.', 'error');
@@ -249,24 +283,22 @@
             }
 
             const payload = { user_id: userId, title, platform, genre, run_type, tags };
+            if (thumbnail_url_raw) payload.thumbnail_url = thumbnail_url_raw;
 
             try {
                 const res = await fetch(`${API}/api/games`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: 'Bearer ' + token
-                    },
+                    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
                     body: JSON.stringify(payload)
                 });
 
                 if (res.status === 401) return handleUnauthorized();
 
                 const data = await res.json().catch(() => ({}));
-
                 if (res.ok && data.game_id) {
                     toast('Game added!', 'success');
                     document.getElementById('gameForm').reset();
+                    thumbPreview.style.display = 'none';
                     loadGames();
                 } else {
                     toast(data.message || 'Failed to add game', 'error');
@@ -276,6 +308,7 @@
                 toast('Network error.', 'error');
             }
         }
+
 
         async function deleteGame(id) {
             if (!confirm('Delete this game?')) return;
@@ -312,6 +345,7 @@
 
             const card = cards[idx];
 
+            // current values from the rendered card
             const titleText = card.querySelector("div[style*='font-weight:700']").textContent.trim();
             const [titleOnly, runTypeAfter] = titleText.split(' – ');
             const meta = card.querySelector("div[style*='color:var(--muted)']").textContent || '';
@@ -320,26 +354,51 @@
                 .map(t => t.textContent.replace(/^#/, '').trim())
                 .join(', ');
 
+            // try to read the image src for current thumbnail/cover
+            const imgEl = card.querySelector('img');
+            const currentThumb = imgEl ? imgEl.getAttribute('src') || '' : '';
+
             const platformSelect = buildSelect('edit_platform', platforms, platformCur);
             const genreSelect = buildSelect('edit_genre', genres, genreCur);
             const runTypeSelect = buildSelect('edit_run_type', runTypes, runTypeAfter || '');
 
             card.innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <input id="edit_title" class="input" placeholder="Game Title" value="${escapeHtml(titleOnly || '')}" style="flex:2;min-width:240px">
-          ${runTypeSelect}
-          ${platformSelect}
-          ${genreSelect}
-          <input id="edit_tags" class="input" placeholder="Tags (comma-separated)" value="${escapeHtml(tagsCur)}" style="flex:2;min-width:240px">
-        </div>
-        <div style="display:flex;gap:8px;justify-content:flex-end">
-          <button type="button" class="button" onclick="saveEdit(${id})">Save</button>
-          <button type="button" class="button btn-ghost" onclick="cancelEdit()">Cancel</button>
-        </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start">
+        <img id="edit_thumb_preview_${id}" alt=""
+             style="width:96px;height:96px;object-fit:cover;border-radius:8px;background:#111;border:1px solid #222;${currentThumb ? '' : 'display:none'}"
+             ${currentThumb ? `src="${escapeHtml(currentThumb)}"` : ''}>
+        <input id="edit_thumbnail_url" class="input" placeholder="Thumbnail URL (optional)"
+               value="${escapeHtml(currentThumb)}" style="flex:2;min-width:260px">
       </div>
-    `;
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <input id="edit_title" class="input" placeholder="Game Title" value="${escapeHtml(titleOnly || '')}" style="flex:2;min-width:240px">
+        ${runTypeSelect}
+        ${platformSelect}
+        ${genreSelect}
+        <input id="edit_tags" class="input" placeholder="Tags (comma-separated)" value="${escapeHtml(tagsCur)}" style="flex:2;min-width:240px">
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" class="button" onclick="saveEdit(${id})">Save</button>
+        <button type="button" class="button btn-ghost" onclick="cancelEdit()">Cancel</button>
+      </div>
+    </div>
+  `;
+
+            // live preview for edit thumbnail
+            const thumbInput = document.getElementById('edit_thumbnail_url');
+            const preview = document.getElementById(`edit_thumb_preview_${id}`);
+            thumbInput.addEventListener('input', () => {
+                const url = thumbInput.value.trim();
+                if (!url) { preview.style.display = 'none'; preview.removeAttribute('src'); return; }
+                preview.style.display = 'block';
+                preview.src = url;
+                preview.onerror = () => { preview.onerror = null; preview.style.display = 'none'; };
+            });
         }
+
 
         function buildSelect(id, options, current) {
             const opts = ['<option value="">Select</option>']
@@ -363,6 +422,7 @@
             const genre = document.getElementById('edit_genre').value.trim();
             const run_type = document.getElementById('edit_run_type').value.trim();
             const tags = document.getElementById('edit_tags').value.trim();
+            const thumb = document.getElementById('edit_thumbnail_url').value.trim();
 
             if (!title) {
                 toast('Title is required.', 'error');
@@ -374,23 +434,21 @@
                 platform: platform || null,
                 genre: genre || null,
                 run_type: run_type || null,
-                tags: tags || null
+                tags: tags || null,
+                // send null to clear; backend normalizes empty -> None
+                thumbnail_url: thumb || null
             };
 
             try {
                 const res = await fetch(`${API}/api/games/${id}`, {
                     method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: 'Bearer ' + token
-                    },
+                    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
                     body: JSON.stringify(payload)
                 });
 
                 if (res.status === 401) return handleUnauthorized();
 
                 const data = await res.json().catch(() => ({}));
-
                 if (res.ok) {
                     toast('Game updated.', 'success');
                     editingGameId = null;
@@ -404,6 +462,7 @@
             }
         }
 
+
         function cancelEdit() {
             editingGameId = null;
             loadGames();
@@ -416,6 +475,34 @@
             } catch { }
             location.replace('/login.html');
         }
+
+        async function setThumbnail(id) {
+            const url = prompt("Paste an image URL for this game’s thumbnail:");
+            if (url === null) return; // cancelled
+            const clean = String(url).trim();
+            if (!clean) {
+                toast("No URL provided.", "error");
+                return;
+            }
+            try {
+                const res = await fetch(`${API}/api/games/${id}/thumbnail`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+                    body: JSON.stringify({ thumbnail_url: clean })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.ok) {
+                    toast("Thumbnail updated.", "success");
+                    loadGames();
+                } else {
+                    toast(data.message || "Failed to update thumbnail.", "error");
+                }
+            } catch (e) {
+                console.error(e);
+                toast("Network error.", "error");
+            }
+        }
+
     </script>
 </body>
 
