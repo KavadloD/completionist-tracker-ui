@@ -320,6 +320,9 @@
             const items = itemsRaw.map((d, i) => ({ description: d, order: i + 1 }));
 
             if (!title) { toast("Title is required.", "error"); return; }
+            if (!run_type) { toast("Run Type is required.", "error"); return; }
+            if (!platform) { toast("Platform is required.", "error"); return; }
+            if (!genre) { toast("Genre is required.", "error"); return; }
             if (items.length === 0) { toast("Add at least one checklist item.", "error"); return; }
             if (description.length > 600) { toast("Please keep the description under 600 characters.", "error"); return; }
 
