@@ -121,9 +121,14 @@
                             el("div", {
                                 style: "color:var(--muted);font-size:13px", text:
                                     `${item.platform || ''}${item.platform && item.genre ? ' | ' : ''}${item.genre || ''}${item.items_count ? ` • ${item.items_count} items` : ''}`
-                            })
+                            }),
+                            el("div", {
+                                style: "color:var(--muted);font-size:12px", text:
+                                    item.created_by_username ? `by ${item.created_by_username}` : ""
+                            }),
                         ])
                     ]);
+
 
                     const topRow = el("div", { style: "display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap" }, [
                         left,
