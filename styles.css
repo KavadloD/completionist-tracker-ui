@@ -708,6 +708,6 @@ a:hover {
 
 .card.gold {
     background: linear-gradient(135deg, #ffd700, #ffcc33, #ffb700);
-    color: #000;
+    border: 1px solid #e6b800;
     font-weight: 600;
 }
