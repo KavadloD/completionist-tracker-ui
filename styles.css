@@ -573,3 +573,52 @@ a:hover {
     gap: 8px;
     line-height: 1.25;
 }
+
+/* Community page polish */
+#communitySearch {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    /* room for icon */
+    border-radius: 10px;
+    background:
+        #1e1e1e url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239ca3af"><path d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 1 0 14 15.5l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0s.41-1.08 0-1.49L15.5 14zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>') no-repeat 10px 50% / 16px;
+    border: 1px solid #2b2b2b;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .03) inset;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+#communitySearch:focus {
+    border-color: rgba(74, 144, 226, .6);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, .18);
+}
+
+#communitySearch::placeholder {
+    color: #9ca3af;
+}
+
+/* Cards list */
+#community-list .card.item {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, var(--panel-2) 0%, #252525 100%);
+    border: 1px solid var(--border);
+    transition: border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+}
+
+#community-list .card.item:hover {
+    border-color: rgba(74, 144, 226, .4);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .35);
+    transform: translateY(-1px);
+}
+
+/* Thumbnails */
+#community-list img {
+    border-radius: 8px;
+    border: 1px solid #222;
+    background: #111;
+}
+
+/* Keep import button tidy on narrow widths */
+#community-list .button {
+    white-space: nowrap;
+}
