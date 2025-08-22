@@ -716,7 +716,6 @@ a:hover {
 
 .card.item.gold:hover {
     border-color: #ffd84d !important;
-    /* brighter gold on hover */
     box-shadow: 0 0 18px rgba(255, 216, 77, 1) !important;
     transform: translateY(-2px);
 }
