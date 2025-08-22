@@ -708,7 +708,7 @@ a:hover {
 
 
 .card.item.gold {
-    background: linear-gradient(135deg, #ffd700, #ffcc33, #ffb700) !important;
+    background: linear-gradient(135deg, #000000, #ce9a00, #ffb700) !important;
     border: 1px solid #e6b800;
     /* no color change; keeps your existing text color */
 }
