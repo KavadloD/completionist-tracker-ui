@@ -709,17 +709,18 @@ a:hover {
 
 .card.item.gold {
     background: inherit;
-    /* keep dark background */
-    border: 3px solid #ffcc33;
-    /* visible gold */
-    box-shadow: 0 0 12px rgba(255, 204, 51, .8);
+    border: 3px solid #ffcc33 !important;
+    box-shadow: 0 0 12px rgba(255, 204, 51, 0.8) !important;
     transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
 }
 
 .card.item.gold:hover {
-    border-color: #ffd84d;
-    /* brighter on hover */
-    box-shadow: 0 0 18px rgba(255, 216, 77, 1);
+    border-color: #ffd84d !important;
+    /* brighter gold on hover */
+    box-shadow: 0 0 18px rgba(255, 216, 77, 1) !important;
     transform: translateY(-2px);
-    /* slight lift on hover */
+}
+
+.card.item.gold:hover {
+    outline-color: #ffd84d !important;
 }
