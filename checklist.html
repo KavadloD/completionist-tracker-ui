@@ -2,26 +2,28 @@
 <html lang="en">
 
 <head>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="styles.css">
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="styles.css" />
     <script src="toast.js" defer></script>
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
     <title>Checklist – Completionist Tracker</title>
 
+    <!-- Prevent flash before auth check -->
     <style>
         html {
-            visibility: hidden
+            visibility: hidden;
         }
     </style>
+
     <script>
         (async () => {
-            const LOGIN_PATH = '/login.html';
-            const token = localStorage.getItem('token');
-            const legacyUserId = localStorage.getItem('ct_user_id');
+            const LOGIN_PATH = "/login.html";
+            const token = localStorage.getItem("token");
+            const legacyUserId = localStorage.getItem("ct_user_id");
 
             const rememberDest = () => {
                 try {
-                    sessionStorage.setItem('redirectAfterLogin', location.pathname + location.search + location.hash);
+                    sessionStorage.setItem("redirectAfterLogin", location.pathname + location.search + location.hash);
                 } catch { }
             };
 
@@ -44,7 +46,6 @@
             }
 
             if (legacyUserId) {
-                console.warn("Running in legacy mode (no token)");
                 document.documentElement.style.visibility = "visible";
                 return;
             }
@@ -52,7 +53,6 @@
             toLogin();
         })();
     </script>
-
 </head>
 
 <body>
@@ -69,7 +69,6 @@
         <!-- Top panel -->
         <div class="panel" style="margin-top:12px">
             <div class="checklist-top">
-
                 <div class="checklist-header" style="flex:1 1 auto; min-width:260px;">
                     <h1 id="gameTitle">Game Checklist</h1>
                     <p style="color: var(--muted);">Track your progress for individual game goals.</p>
@@ -79,9 +78,10 @@
 
                     <!-- Add new item -->
                     <div class="add-row" style="display:flex; gap:8px; align-items:center; max-width:400px;">
-                        <input id="descriptionInput" class="input" placeholder="New checklist item">
+                        <input id="descriptionInput" class="input" placeholder="New checklist item" />
                         <button id="addBtn" class="button">Add</button>
                     </div>
+
                     <!-- Share to Community -->
                     <div style="margin-top:12px">
                         <button id="shareBtn" class="button btn-ghost">Share to Community</button>
@@ -90,16 +90,14 @@
 
                 <!-- Right: square thumbnail -->
                 <img id="gameThumb" alt=""
-                    style="width:160px;height:160px;object-fit:cover;border-radius:12px;background:#111;border:1px solid #222;display:none">
+                    style="width:160px;height:160px;object-fit:cover;border-radius:12px;background:#111;border:1px solid #222;display:none" />
             </div>
         </div>
-
 
         <!-- Items list -->
         <div class="panel wide-panel" style="margin-top:16px;">
             <ul id="items" class="list" style="display:flex; flex-direction:column; gap:14px;"></ul>
         </div>
-
     </div>
 
     <script>
@@ -124,7 +122,7 @@
             location.replace("/login.html");
         }
 
-        // UI pieces we’ll bind after DOM is ready
+        // UI refs
         let itemsEl, inputEl, addBtn, progressEl;
 
         // Data loads
@@ -148,17 +146,17 @@
                     li.dataset.id = id;
 
                     li.innerHTML = `
-          <label class="check-row">
-            <input type="checkbox" class="toggle" ${item.completed ? "checked" : ""}>
-            <span class="desc"></span>
-            <input type="text" class="edit input" style="display:none;">
-          </label>
-          <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
-            <button class="button btn-edit edit-btn">Edit</button>
-            <button class="button btn-save save-btn" style="display:none;">Save</button>
-            <button class="button btn-cancel cancel-btn" style="display:none;">Cancel</button>
-            <button class="button btn-delete del">Delete</button>
-          </div>`;
+            <label class="check-row">
+              <input type="checkbox" class="toggle" ${item.completed ? "checked" : ""}>
+              <span class="desc"></span>
+              <input type="text" class="edit input" style="display:none;">
+            </label>
+            <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+              <button class="button btn-edit edit-btn">Edit</button>
+              <button class="button btn-save save-btn" style="display:none;">Save</button>
+              <button class="button btn-cancel cancel-btn" style="display:none;">Cancel</button>
+              <button class="button btn-delete del">Delete</button>
+            </div>`;
 
                     // Safe text assignment
                     const descSpan = li.querySelector(".desc");
@@ -352,11 +350,12 @@
             }
         }
 
-        // Events and init after DOM is ready
+        // Events and init
         document.addEventListener("DOMContentLoaded", () => {
             if (!GAME_ID) {
                 toast("Missing game ID, returning to dashboard", "error");
-                return (window.location.href = "index.html");
+                window.location.href = "index.html";
+                return;
             }
 
             itemsEl = document.getElementById("items");
@@ -389,6 +388,7 @@
             itemsEl.addEventListener("click", async (e) => {
                 const li = e.target.closest("li");
                 if (!li) return;
+
                 const id = li.dataset.id;
                 const descSpan = li.querySelector(".desc");
                 const editInput = li.querySelector(".edit");
@@ -466,21 +466,20 @@
         });
     </script>
 
-
     <dialog id="shareDialog"
         style="border:none;border-radius:12px;padding:0;max-width:640px;width:92%;background:#121212;color:var(--text);">
         <form method="dialog" id="shareForm" style="padding:16px;display:flex;flex-direction:column;gap:10px">
             <div style="font-weight:700;font-size:18px;margin-bottom:4px">Publish to Community</div>
             <div class="section" style="color:var(--muted);margin-top:-4px">Review details and items, then publish</div>
 
-            <input id="c_title" class="input" placeholder="Template Title" required>
+            <input id="c_title" class="input" placeholder="Template Title" required />
             <div style="display:flex;gap:10px;flex-wrap:wrap">
-                <input id="c_run_type" class="input" placeholder="Run Type" style="flex:1;min-width:140px" required>
-                <input id="c_platform" class="input" placeholder="Platform" style="flex:1;min-width:140px" required>
-                <input id="c_genre" class="input" placeholder="Genre" style="flex:1;min-width:140px" required>
+                <input id="c_run_type" class="input" placeholder="Run Type" style="flex:1;min-width:140px" required />
+                <input id="c_platform" class="input" placeholder="Platform" style="flex:1;min-width:140px" required />
+                <input id="c_genre" class="input" placeholder="Genre" style="flex:1;min-width:140px" required />
             </div>
-            <input id="c_tags" class="input" placeholder="Tags (comma-separated)">
-            <input id="c_thumb" class="input" placeholder="Thumbnail URL (optional)">
+            <input id="c_tags" class="input" placeholder="Tags (comma-separated)" />
+            <input id="c_thumb" class="input" placeholder="Thumbnail URL (optional)" />
             <textarea id="c_desc" class="input" placeholder="Add a short description (optional, shown publicly)"
                 style="min-height:70px"></textarea>
 
@@ -493,7 +492,6 @@
             </div>
         </form>
     </dialog>
-
 </body>
 
 </html>

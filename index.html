@@ -8,14 +8,6 @@
     <script src="toast.js" defer></script>
     <title>Dashboard – Completionist Tracker</title>
 
-    <!-- Prevent flash before auth check -->
-    <style>
-        html {
-            visibility: hidden
-        }
-    </style>
-
-    <!-- Auth guard: runs BEFORE anything else -->
     <style>
         html {
             visibility: hidden
@@ -35,13 +27,11 @@
             };
             const toLogin = () => { rememberDest(); location.replace(LOGIN_PATH); };
 
-            // Helper so other scripts can avoid sending an empty Authorization header
             window.authHeaders = function () {
                 const t = localStorage.getItem('token');
                 return t ? { Authorization: 'Bearer ' + t } : {};
             };
 
-            // Preferred: token + server verify
             if (token) {
                 try {
                     const res = await fetch(API + '/api/auth/me', { headers: { Authorization: 'Bearer ' + token } });
@@ -50,19 +40,16 @@
                     document.documentElement.style.visibility = 'visible';
                     return;
                 } catch {
-                    localStorage.removeItem('token'); // fall through to legacy or login
+                    localStorage.removeItem('token');
                 }
             }
 
-            // Temporary legacy mode: allow if we only have ct_user_id (no token)
             if (legacyUserId && devAllowLegacy) {
-                // console.warn('Running in legacy mode (no token).'); // enable during development if desired
                 window.isLegacySession = true;
                 document.documentElement.style.visibility = 'visible';
                 return;
             }
 
-            // No session—go to login
             toLogin();
         })();
     </script>
@@ -117,12 +104,10 @@
     </div>
 
     <script>
-        // Config and session
         const API = 'https://completionist-backend.onrender.com';
         const token = localStorage.getItem('token') || '';
         const userId = Number(localStorage.getItem('ct_user_id') || 0);
 
-        // Static options
         const platforms = [
             'PC', 'PlayStation', 'PlayStation 2', 'PlayStation 3', 'PlayStation 4', 'PlayStation 5',
             'Xbox', 'Xbox 360', 'Xbox One', 'Xbox Series X/S', 'Nintendo Switch', 'Wii', 'Wii U',
@@ -143,7 +128,6 @@
             'Permadeath', 'Speedrun', 'Glitchless', 'Nuzlocke', 'Custom', 'Other'
         ];
 
-        // Utilities (global scope)
         function escapeHtml(s) {
             return String(s || '')
                 .replaceAll('&', '&amp;')
@@ -166,7 +150,6 @@
             return `<select id="${id}" class="input" style="flex:1;min-width:160px">${opts}</select>`;
         }
 
-        // Init
         window.onload = () => {
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) {
@@ -181,12 +164,10 @@
             loadGames();
             document.getElementById('gameForm').addEventListener('submit', handleSubmit);
 
-            // Unhide if auth guard did not already
             if (document.documentElement.style.visibility !== 'visible') {
                 document.documentElement.style.visibility = 'visible';
             }
 
-            // Thumbnail live preview on add form
             const thumbInput = document.getElementById('thumbnail_url');
             const thumbPreview = document.getElementById('thumbPreview');
             thumbInput.addEventListener('input', () => {
@@ -214,7 +195,6 @@
             });
         }
 
-        // Data loaders
         async function loadGames() {
             try {
                 const res = await fetch(`${API}/api/games?user_id=${userId}`, {
@@ -231,7 +211,6 @@
                     return;
                 }
 
-                // Fetch progress per game
                 const games = await Promise.all(
                     data.map(async g => {
                         try {
@@ -315,7 +294,6 @@
             }
         }
 
-        // Form handlers
         async function handleSubmit(e) {
             e.preventDefault();
 
@@ -382,7 +360,6 @@
             }
         }
 
-        // Inline editor
         let editingGameId = null;
 
         function editGame(id) {
@@ -432,7 +409,6 @@
       </div>
     `;
 
-            // live preview for edit thumbnail
             const thumbInput = document.getElementById('edit_thumbnail_url');
             const preview = document.getElementById(`edit_thumb_preview_${id}`);
             if (thumbInput && preview) {
@@ -446,7 +422,6 @@
             }
         }
 
-        // Global handlers for inline editor buttons
         window.saveEdit = async function (id) {
             const title = document.getElementById('edit_title').value.trim();
             const platform = document.getElementById('edit_platform').value.trim();
