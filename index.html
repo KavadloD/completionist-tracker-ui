@@ -21,6 +21,7 @@
 
             const token = localStorage.getItem('token');
             const legacyUserId = localStorage.getItem('ct_user_id');
+            const DEFAULT_THUMB = "/images/fallback_thumbnail.png";
 
             const rememberDest = () => {
                 try { sessionStorage.setItem('redirectAfterLogin', location.pathname + location.search + location.hash); } catch { }
@@ -226,12 +227,7 @@
                     })
                 );
 
-                const fallbackThumb =
-                    "data:image/svg+xml;utf8," +
-                    encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90">
-  <rect width="100%" height="100%" fill="#1f2937"/>
-  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9ca3af" font-family="Segoe UI, Arial" font-size="14">No Image</text>
-</svg>`);
+                const fallbackThumb = DEFAULT_THUMB;
 
                 games.sort((a, b) => b.game_id - a.game_id);
                 games.forEach((game) => {
