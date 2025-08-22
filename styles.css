@@ -709,9 +709,16 @@ a:hover {
 
 .card.item.gold {
     background: inherit;
-    /* keep normal card background */
     border: 3px solid #ffcc33;
-    /* brighter gold border */
     box-shadow: 0 0 12px rgba(255, 204, 51, 0.8);
+}
+
+.card.item.gold:hover {
+    border: 3px solid #ffd84d;
+    /* slightly brighter gold on hover */
+    box-shadow: 0 0 18px rgba(255, 216, 77, 1);
     /* stronger glow */
+    transform: translateY(-2px);
+    /* subtle lift */
+    transition: all 0.2s ease-in-out;
 }
