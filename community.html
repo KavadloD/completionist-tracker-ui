@@ -71,9 +71,14 @@
         <main class="panel">
             <h1>Browse Community Checklists</h1>
             <p class="section" style="color: var(--muted);">Import templates into your library and start tracking.</p>
-            <div id="community-list" class="list">Loading...</div>
-        </main>
 
+            <div style="margin-top:10px;max-width:420px;">
+                <input id="communitySearch" class="input"
+                    placeholder="Search titles, tags, platform, genre, run type, author, description">
+            </div>
+
+            <div id="community-list" class="list" style="margin-top:12px;">Loading...</div>
+        </main>
 
         <script>
             const API = "https://completionist-backend.onrender.com";
@@ -93,25 +98,20 @@
                 Object.entries(props).forEach(([k, v]) => {
                     if (k === "class") n.className = v;
                     else if (k === "text") n.textContent = v;
+                    else if (k === "onclick") n.onclick = v;
                     else n.setAttribute(k, v);
                 });
                 (Array.isArray(children) ? children : [children]).forEach(c => c && n.appendChild(c));
                 return n;
             }
 
-            async function loadCommunityChecklists() {
-                const res = await fetch(`${API}/api/community`, { headers: authHeaders() });
-                if (res.status === 401) return handleUnauthorized();
-                const data = await res.json().catch(() => []);
+            let ALL_TEMPLATES = [];
+
+            function renderList(list) {
                 const container = document.getElementById("community-list");
-
-                if (!Array.isArray(data) || data.length === 0) {
-                    container.innerHTML = `<div class="card"><span style="color: var(--muted);">No community templates available.</span></div>`;
-                    return;
-                }
-
                 container.innerHTML = "";
-                data.forEach(item => {
+
+                for (const item of list) {
                     const left = el("div", { style: "display:flex;gap:10px;align-items:center" }, [
                         item.thumbnail_url
                             ? el("img", { src: item.thumbnail_url, alt: "", style: "width:64px;height:64px;object-fit:cover;border-radius:8px;background:#111;border:1px solid #222" })
@@ -119,51 +119,77 @@
                         el("div", { style: "display:flex;flex-direction:column;gap:6px;line-height:1.25" }, [
                             el("div", { style: "font-weight:700", text: item.title || "" }),
                             el("div", {
-                                style: "color:var(--muted);font-size:13px", text:
-                                    `${item.platform || ''}${item.platform && item.genre ? ' | ' : ''}${item.genre || ''}${item.items_count ? ` • ${item.items_count} items` : ''}`
+                                style: "color:var(--muted);font-size:13px",
+                                text: `${item.platform || ''}${item.platform && item.genre ? ' | ' : ''}${item.genre || ''}${item.items_count ? ` • ${item.items_count} items` : ''}`
                             }),
                             el("div", {
-                                style: "color:var(--muted);font-size:12px", text:
-                                    item.created_by_username ? `by ${item.created_by_username}` : ""
+                                style: "color:var(--muted);font-size:12px",
+                                text: item.created_by_username ? `by ${item.created_by_username}` : ""
                             }),
                         ])
                     ]);
 
-
-                    const topRow = el("div", { style: "display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap" }, [
-                        left,
-                        el("button", { class: "button", ["data-import"]: String(item.community_checklist_id) }, [document.createTextNode("Import")])
-                    ]);
-
                     const card = el("div", { class: "card item" }, [
-                        topRow,
+                        el("div", { style: "display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap" }, [
+                            left,
+                            el("button", { class: "button", text: "Import", onclick: () => importTemplate(item.community_checklist_id) })
+                        ]),
                         el("div", { style: "color:var(--muted);margin-top:8px", text: item.description || "" })
                     ]);
 
                     container.appendChild(card);
+                }
+
+                if (!list.length) {
+                    container.innerHTML = `<div style="color:var(--muted);padding:8px 0">No results</div>`;
+                }
+            }
+
+            function filterTemplates(q) {
+                q = (q || "").toLowerCase().trim();
+                if (!q) return ALL_TEMPLATES.slice();
+                const terms = q.split(/\s+/).filter(Boolean);
+
+                return ALL_TEMPLATES.filter(t => {
+                    const hay = [
+                        t.title, t.platform, t.genre, t.run_type, t.tags, t.description, t.created_by_username
+                    ].map(s => (s || "").toLowerCase()).join(" ");
+                    return terms.every(term => hay.includes(term));
                 });
+            }
 
-                container.onclick = async (e) => {
-                    const btn = e.target.closest("[data-import]");
-                    if (!btn) return;
-                    const id = btn.getAttribute("data-import");
-                    if (!userId) { toast("Please log in to import checklists.", "info"); return; }
+            function initCommunitySearch() {
+                const input = document.getElementById("communitySearch");
+                if (!input) return;
+                let timer;
+                input.addEventListener("input", () => {
+                    clearTimeout(timer);
+                    timer = setTimeout(() => renderList(filterTemplates(input.value)), 120);
+                });
+            }
 
-                    const res = await fetch(`${API}/api/community/import/${id}`, {
-                        method: "POST",
-                        headers: Object.assign({ "Content-Type": "application/json" }, authHeaders()),
-                        body: JSON.stringify({ user_id: userId })
-                    });
-                    if (res.status === 401) return handleUnauthorized();
+            async function loadCommunityChecklists() {
+                const res = await fetch(`${API}/api/community`, { headers: authHeaders() });
+                if (res.status === 401) return handleUnauthorized();
+                ALL_TEMPLATES = await res.json().catch(() => []);
+                renderList(ALL_TEMPLATES);
+            }
 
-                    const result = await res.json().catch(() => ({}));
-                    if (res.ok) {
-                        toast("Checklist imported. Opening your new checklist.", "success");
-                        window.location.href = `checklist.html?game_id=${result.new_game_id}`;
-                    } else {
-                        toast(result.message || "Import failed", "error");
-                    }
-                };
+            async function importTemplate(id) {
+                if (!userId) { toast("Please log in to import checklists.", "info"); return; }
+                const res = await fetch(`${API}/api/community/import/${id}`, {
+                    method: "POST",
+                    headers: Object.assign({ "Content-Type": "application/json" }, authHeaders()),
+                    body: JSON.stringify({ user_id: userId })
+                });
+                if (res.status === 401) return handleUnauthorized();
+                const result = await res.json().catch(() => ({}));
+                if (res.ok) {
+                    toast("Checklist imported. Opening your new checklist.", "success");
+                    window.location.href = `checklist.html?game_id=${result.new_game_id}`;
+                } else {
+                    toast(result.message || "Import failed", "error");
+                }
             }
 
             // Logout
@@ -176,10 +202,10 @@
                 });
             }
 
-            // Initial load
+            // Init
             loadCommunityChecklists();
+            initCommunitySearch();
         </script>
-
 </body>
 
 </html>
