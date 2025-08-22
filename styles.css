@@ -705,3 +705,9 @@ a:hover {
 #shareBtn:hover::after {
     transform: translate(2px, -2px);
 }
+
+.card.gold {
+    background: linear-gradient(135deg, #ffd700, #ffcc33, #ffb700);
+    color: #000;
+    font-weight: 600;
+}
